@@ -7,9 +7,40 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
-
 import copy
 # import openai
+
+# HELP FUNCTION ===============================================================
+
+def help():
+    """
+    Prints out the help message for this module.
+    """
+    print("This module contains a set of utility functions for speckle streams.")
+    print("______________________________________________________________________")
+    print("It requires the specklepy package to be installed -> !pip install specklepy")
+    print("the following functions are available:")
+    print("getSpeckleStream(stream_id, branch_name, client)")
+    print("getSpeckleGlobals(stream_id, client)")
+    print("get_dataframe(objects_raw, return_original_df)")
+    print("updateStreamAnalysis(stream_id, new_data, branch_name, geometryGroupPath, match_by_id, openai_key, return_original)")
+    print("______________________________________________________________________")
+    print("for detailed help call >>> help(speckle_utils.function_name) <<< ")
+    print("______________________________________________________________________")
+    print("standard usage:")
+    print("______________________________________________________________________")
+    print("retreiving data")
+    print("1. import speckle_utils & speckle related libaries from specklepy")
+    print("2. create a speckle client -> client = speckle_utils.createClient()")
+    print("3. get a speckle stream -> stream = speckle_utils.getSpeckleStream(stream_id, branch_name, client)")
+    print("4. get the stream data -> data = stream['pth']['to']['data']")
+    print("5. transform data to dataframe -> df = speckle_utils.get_dataframe(data, return_original_df=False)")
+    print("______________________________________________________________________")
+    print("updating data")
+    print("1. call updateStreamAnalysis --> updateStreamAnalysis(new_data, stream_id, branch_name, geometryGroupPath, match_by_id, openai_key, return_original)")
+
+
+#==============================================================================
 
 def getSpeckleStream(stream_id,
                      branch_name,
@@ -144,9 +175,6 @@ def get_dataframe(objects_raw, return_original_df=False):
     else:
         return df
     
-
-
-
 
 def updateStreamAnalysis(
           new_data,
