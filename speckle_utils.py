@@ -30,7 +30,8 @@ def helper():
     print("______________________________________________________________________")
     print("retreiving data")
     print("1. import speckle_utils & speckle related libaries from specklepy")
-    print("2. create a speckle client -> client = speckle_utils.createClient()")
+    print("2. create a speckle client -> client = SpeckleClient(host='https://speckle.xyz/')" )
+    print("                              client.authenticate_with_token(token='your_token_here')")
     print("3. get a speckle stream -> stream = speckle_utils.getSpeckleStream(stream_id, branch_name, client)")
     print("4. get the stream data -> data = stream['pth']['to']['data']")
     print("5. transform data to dataframe -> df = speckle_utils.get_dataframe(data, return_original_df=False)")
@@ -176,6 +177,7 @@ def get_dataframe(objects_raw, return_original_df=False):
     
 
 def updateStreamAnalysis(
+          client,
           new_data,
           stream_id,
           branch_name,
