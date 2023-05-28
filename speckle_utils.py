@@ -3,9 +3,11 @@ import json
 import pandas as pd
 import numpy as np
 import specklepy
+from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
+
 import copy
 # import openai
 

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import copy
 
+
 def cleanData(data, mode="drop", num_only=False):
     """
     Cleans data by handling missing or null values according to the specified mode.
