@@ -12,7 +12,7 @@ import copy
 
 # HELP FUNCTION ===============================================================
 
-def help():
+def helper():
     """
     Prints out the help message for this module.
     """
