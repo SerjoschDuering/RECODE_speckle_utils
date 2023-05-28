@@ -392,9 +392,9 @@ def gptCommitMessage(objects_raw, new_data,openai_key):
         openai.api_key = openai_key
     except NameError as ne:
         if str(ne) == "name 'openai' is not defined":
-            print("Error: openai module not imported. Please import the module before setting the API key.")
+            print("No auto commit message: openai module not imported. Please import the module before setting the API key.")
         elif str(ne) == "name 'openai_key' is not defined":
-            print("Error: openai_key is not defined. Please define the variable before setting the API key.")
+            print("No auto commit message: openai_key is not defined. Please define the variable before setting the API key.")
         else:
             raise ne
 

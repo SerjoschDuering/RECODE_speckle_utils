@@ -3,6 +3,18 @@ import pandas as pd
 import numpy as np
 import copy
 
+def helper():
+    """
+    Prints out the help message for this module.
+    """
+    print("This module contains a set of utility functions for data processing.")
+    print("______________________________________________________________________")
+    print("for detailed help call >>> help(speckle_utils.function_name) <<< ")
+    print("______________________________________________________________________")
+    print("available functions:")
+    print("cleanData(data, mode='drop', num_only=False) -> clean dataframes, series or numpy arrays" )
+    print("transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False) -> transform data to a score based on percentiles and provided points") 
+
 
 def cleanData(data, mode="drop", num_only=False):
     """
