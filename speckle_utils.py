@@ -13,7 +13,7 @@ import copy
 
 def getSpeckleStream(stream_id,
                      branch_name,
-                     client=client,
+                     client,
                      ):
     """
     Retrieves data from a specific branch of a speckle stream.
@@ -55,7 +55,7 @@ def getSpeckleStream(stream_id,
 
     return res
  
-def getSpeckleGlobals(stream_id, client=client):
+def getSpeckleGlobals(stream_id, client):
     """
     Retrieves global analysis information from the "globals" branch of a speckle stream.
 
