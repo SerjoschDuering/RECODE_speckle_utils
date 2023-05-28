@@ -11,7 +11,6 @@ import copy
 # import openai
 
 # HELP FUNCTION ===============================================================
-
 def helper():
     """
     Prints out the help message for this module.
