@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import copy
+import os 
 
 def helper():
     """
@@ -14,7 +15,8 @@ def helper():
     print("available functions:")
     print("cleanData(data, mode='drop', num_only=False) -> clean dataframes, series or numpy arrays" )
     print("transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False) -> transform data to a score based on percentiles and provided points") 
-
+    print("colab_create_directory(base_name) -> create a directory with the given name, if it already exists, add a number to the end of the name, usefull for colab")
+    print("colab_zip_download_folder(dir_name) -> zips and downloads a directory from colab. will only work in google colaboratory ")
 
 def cleanData(data, mode="drop", num_only=False):
     """
@@ -117,3 +119,37 @@ def transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False):
     transformed_data[transformed_data >= percentile_high] = maxPts
 
     return transformed_data
+
+
+def colab_create_directory(base_name):
+    """ creates a directory with the given name, if it already exists, add a number to the end of the name.
+    Usefull for colab to batch save e.g. images and avoid overwriting.
+    Args:
+        base_name (str): name of the directory to create
+    Returns:
+        str: name of the created directory"""
+    counter = 1
+    dir_name = base_name
+
+    while os.path.exists(dir_name):
+        dir_name = f"{base_name}_{counter}"
+        counter += 1
+
+    os.mkdir(dir_name)
+    return dir_name
+
+def colab_zip_download_folder(dir_name):
+    """ zips and downloads a directory from colab. will only work in google colab
+    Args: 
+        dir_name (str): name of the directory to zip and download
+    returns: 
+        None, file will be downloaded to the local machine"""
+    try:
+        # zip the directory
+        get_ipython().system('zip -r /content/{dir_name}.zip /content/{dir_name}')
+
+        # download the zip file
+        from google.colab import files
+        files.download(f"/content/{dir_name}.zip")
+    except:
+        print("something went wrong, this function will only work in google colab, make sure to import the necessary packages. >>> from google.colab import files <<<" ) 
