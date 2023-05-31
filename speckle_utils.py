@@ -7,6 +7,8 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
+from specklepy.objects.geometry import Polyline, Point
+
 import copy
 # import openai
 
@@ -441,3 +443,51 @@ def gptCommitMessage(objects_raw, new_data,openai_key):
     except:
         answer_summery = summary
     return answer_summery
+
+def specklePolyline_to_BokehPatches(speckle_objs, pth_to_geo="curves", id_key="ids"):
+  """
+  Takes a list of speckle objects, extracts the polyline geometry at the specified path, and returns a dataframe of x and y coordinates for each polyline.
+  This format is compatible with the Bokeh Patches object for plotting.
+  
+  Args:
+    speckle_objs (list): A list of Speckle Objects
+    pth_to_geo (str): Path to the geometry in the Speckle Object
+    id_key (str): The key to use for the uuid in the dataframe. Defaults to "uuid"
+    
+  Returns:
+    pd.DataFrame: A Pandas DataFrame with columns "uuid", "patches_x" and "patches_y"
+  """
+  patchesDict = {"uuid":[], "patches_x":[], "patches_y":[]}
+  
+  for obj in speckle_objs:
+    obj_geo = obj[pth_to_geo]
+    obj_pts = Polyline.as_points(obj_geo)
+    coorX = []
+    coorY = []
+    for pt in obj_pts:
+      coorX.append(pt.x)
+      coorY.append(pt.y)ss
+    
+    patchesDict["patches_x"].append(coorX)
+    patchesDict["patches_y"].append(coorY)
+    patchesDict["uuid"].append(obj[id_key])
+
+  return pd.DataFrame(patchesDict)
+
+
+
+def rebuildAnalysisInfoDict(analysisInfo):
+    """rebuild the analysisInfo dictionary to remove the ++ from the keys
+
+    Args:
+        analysisInfo (list): a list containing the analysisInfo dictionary
+
+    Returns:
+        dict: a dictionary containing the analysisInfo dictionary with keys without the ++
+
+    """
+    analysisInfoDict = {}
+    for curKey in analysisInfo[0]:
+        newkey = curKey.split("++")[0]
+        analysisInfoDict[newkey] = analysisInfo[0][curKey]
+    return analysisInfoDict
