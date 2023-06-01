@@ -8,6 +8,7 @@ from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
 from specklepy.objects.geometry import Polyline, Point
+import openai
 
 import copy
 # import openai
@@ -271,6 +272,7 @@ def updateStreamAnalysis(
     # You can now create a commit on your stream with this object
     commit_id = client.commit.create(
         stream_id=stream_id,
+        branch_name=branch_name,
         object_id=new_objects_raw_speckle_id,
         message="Updated item in colab -" + answer_summary,
         )
@@ -391,6 +393,7 @@ def gptCommitMessage(objects_raw, new_data,openai_key):
     # data frame 
     #try:
     try:
+        import openai
         openai.api_key = openai_key
     except NameError as ne:
         if str(ne) == "name 'openai' is not defined":
