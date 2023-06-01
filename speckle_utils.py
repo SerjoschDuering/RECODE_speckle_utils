@@ -466,7 +466,7 @@ def specklePolyline_to_BokehPatches(speckle_objs, pth_to_geo="curves", id_key="i
     coorY = []
     for pt in obj_pts:
       coorX.append(pt.x)
-      coorY.append(pt.y)ss
+      coorY.append(pt.y)
     
     patchesDict["patches_x"].append(coorX)
     patchesDict["patches_y"].append(coorY)
