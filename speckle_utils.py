@@ -8,7 +8,11 @@ from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
 from specklepy.objects.geometry import Polyline, Point
-import openai
+from specklepy.api.wrapper import StreamWrapper
+try:
+    import openai
+except:
+    pass
 
 import copy
 # import openai
@@ -48,6 +52,7 @@ def helper():
 def getSpeckleStream(stream_id,
                      branch_name,
                      client,
+                     commit_id="latest"
                      ):
     """
     Retrieves data from a specific branch of a speckle stream.
@@ -56,6 +61,7 @@ def getSpeckleStream(stream_id,
         stream_id (str): The ID of the speckle stream.
         branch_name (str): The name of the branch within the speckle stream.
         client (specklepy.api.client.Client, optional): A speckle client. Defaults to a global `client`.
+        commit_id (str): id of a commit, if nothing is specified, the latest commit will be fetched
 
     Returns:
         dict: The speckle stream data received from the specified branch.
