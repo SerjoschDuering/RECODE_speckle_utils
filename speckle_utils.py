@@ -72,8 +72,7 @@ def getSpeckleStream(stream_id,
     It prints out the branch details and the creation dates of the last three commits for debugging purposes.
     """
 
-    # get transport
-    transport = ServerTransport(client=client, stream_id=stream_id)
+ 
 
     # set stream and branch
     branch = client.branch.get(stream_id, branch_name, 3)
@@ -85,7 +84,7 @@ def getSpeckleStream(stream_id,
     if commit_id == "":
         latest_commit = branch.commits.items[0]
         choosen_commit_id = latest_commit.id
-        print(choosen_commit_id)
+        print("afasfgagagag!", choosen_commit_id)
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("latest commit ", branch.commits.items[0].createdAt, " was choosen")
     else:
@@ -93,7 +92,10 @@ def getSpeckleStream(stream_id,
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("provided commit ", choosen_commit_id, " was choosen")
 
-
+    print(commit)
+    print(commit.referencedObject)
+       # get transport
+    transport = ServerTransport(client=client, stream_id=stream_id)
     #speckle stream
     res = operations.receive(commit.referencedObject, transport)
 
