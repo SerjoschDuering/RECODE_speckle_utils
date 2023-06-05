@@ -87,7 +87,7 @@ def getSpeckleStream(stream_id,
     else:
         choosen_commit_id = commit_id
         commit = client.commit.get(stream_id, choosen_commit_id)
-        print("commit", branch.commits.items[0].createdAt, " was choosen")
+        print("commit ", choosen_commit_id, " was choosen")
 
 
     # get objects
