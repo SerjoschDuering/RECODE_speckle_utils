@@ -85,6 +85,7 @@ def getSpeckleStream(stream_id,
     if commit_id == "":
         latest_commit = branch.commits.items[0]
         choosen_commit_id = latest_commit.id
+        print(choosen_commit_id)
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("latest commit ", branch.commits.items[0].createdAt, " was choosen")
     else:
