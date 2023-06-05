@@ -92,7 +92,7 @@ def getSpeckleStream(stream_id,
 
     # get objects
     transport = ServerTransport(client=client, stream_id=stream_id)
-
+    print("got transport")
     #speckle stream
     res = operations.receive(commit.referencedObject, transport)
 
