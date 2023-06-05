@@ -52,7 +52,7 @@ def helper():
 def getSpeckleStream(stream_id,
                      branch_name,
                      client,
-                     commit_id="latest"
+                     commit_id=""
                      ):
     """
     Retrieves data from a specific branch of a speckle stream.
@@ -79,16 +79,19 @@ def getSpeckleStream(stream_id,
     print("last three commits:")
     [print(ite.createdAt) for ite in branch.commits.items]
 
-    print("-----")
-    print("commit", branch.commits.items[0].createdAt, " was choosen")
-    print("-----")
-    latest_commit = branch.commits.items[0]
-    commit_id = latest_commit.id 
+    if commit_id == "":
+        latest_commit = branch.commits.items[0]
+        choosen_commit_id = latest_commit.id
+        commit = client.commit.get(stream_id, choosen_commit_id)
+        print("commit ", branch.commits.items[0].createdAt, " was choosen")
+    else:
+        choosen_commit_id = commit_id
+        commit = client.commit.get(stream_id, choosen_commit_id)
+        print("commit", branch.commits.items[0].createdAt, " was choosen")
 
-    commit = client.commit.get(stream_id, commit_id)
 
     # get objects
-    transport = ServerTransport(client=client, stream_id=stream_id)
+    transport = ServerTransport(client=client, stream_id=commit)
 
     #speckle stream
     res = operations.receive(commit.referencedObject, transport)
