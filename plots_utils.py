@@ -54,8 +54,8 @@ def cleanData(data, mode="drop", num_only=False):
     return data
 
 def boxPlot(inp_data, columName, cull_invalid=True):
-  #if cull_invalid == True:
-  #  inp_data = cleanData(inp_data, mode="drop", num_only=True)
+  if cull_invalid == True:
+    inp_data = cleanData(inp_data, mode="drop", num_only=True)
 
   # Create a new figure
   fig, ax = plt.subplots(figsize=(10,3), dpi=200)
