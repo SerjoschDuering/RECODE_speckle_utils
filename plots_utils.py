@@ -118,7 +118,7 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 
-def histogramScore(inp_data,columName, cull_invalid=True, show_fig = False):
+def histogram(inp_data,columName, cull_invalid=True:
   # Create a new figure
   if cull_invalid:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
@@ -175,9 +175,6 @@ def histogramScore(inp_data,columName, cull_invalid=True, show_fig = False):
   # Remove the x-axis label
   ax.set_xlabel('')
 
-  if show_fig:
-    pass
-    #show(fig)
 
   return fig, ax
 
