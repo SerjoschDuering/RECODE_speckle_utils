@@ -118,7 +118,7 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 
-def histogram(inp_data,columName, cull_invalid=True):
+def histogramScore(inp_data,columName, cull_invalid=True):
   # Create a new figure
   if cull_invalid:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
