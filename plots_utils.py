@@ -310,7 +310,7 @@ def createActivityNodePlot(dataset):
                 "patches_y_Bridges", 
                 style_dict_bridges,
                 cmap,
-                coloring_col,
+                coloring_col=coloring_col,
                 )
 
     configure_plot(ax, all_x_coords, all_y_coords)
