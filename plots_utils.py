@@ -222,7 +222,7 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap):
     return sm, colorbar
 
 
-def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None):
+def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None):
     
     if drawing_order is None:
         drawing_order = dataset.index
@@ -297,7 +297,8 @@ def createActivityNodePlot(dataset):
                 "patches_y_AN", 
                 style_dict_an, 
                 sm,
-                drawing_order)
+                drawing_order,
+                cmap)
 
     style_dict_bridges = {'linewidth': 1, 'edgecolor': "Black", 'facecolor':"Black"} 
 
