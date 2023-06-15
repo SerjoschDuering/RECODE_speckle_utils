@@ -200,7 +200,7 @@ def calculate_aspect_ratio(all_x_coords, all_y_coords):
     return (size, aspect_ratio) if aspect_ratio > 1 else (size / aspect_ratio, size)
 
 
-def create_colorbar(fig, ax, dataset, coloring_col):
+def create_colorbar(fig, ax, dataset, coloring_col, cmap):
     divider = make_axes_locatable(ax)
     divider.append_axes("right", size="2%", pad=2.15)
 
@@ -288,7 +288,7 @@ def createActivityNodePlot(dataset):
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], ['-', '+', '+'])
 
     draw_polygons(ax, 
