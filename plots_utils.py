@@ -231,22 +231,22 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
         
         # Check if the row is not None and the string length is greater than 2
         if row[x_cord_name] is not None and len(str(row[x_cord_name])) > 2:
-            #try:
-            patch_x_list = [float(i) for i in row[x_cord_name][1:-1].split(",")]
-            patch_y_list = [float(i) for i in row[y_cord_name][1:-1].split(",")]
+            try:
+                patch_x_list = [float(i) for i in row[x_cord_name][1:-1].split(",")]
+                patch_y_list = [float(i) for i in row[y_cord_name][1:-1].split(",")]
 
-            if patch_x_list[0] != patch_x_list[-1] and patch_y_list[0] != patch_y_list[-1]:
-                patch_x_list.append(patch_x_list[0])
-                patch_y_list.append(patch_y_list[0])
+                if patch_x_list[0] != patch_x_list[-1] and patch_y_list[0] != patch_y_list[-1]:
+                    patch_x_list.append(patch_x_list[0])
+                    patch_y_list.append(patch_y_list[0])
 
-            if sm is not None:
-                polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
-            else:
-                polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict)
+                if sm is not None:
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
+                else:
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict)
 
-            ax.add_patch(polygon)
-            #except:
-             #   pass
+                ax.add_patch(polygon)
+            except:
+               pass
 
 
 def configure_plot(ax, all_x_coords, all_y_coords):
