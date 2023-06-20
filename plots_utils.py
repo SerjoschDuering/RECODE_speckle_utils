@@ -200,20 +200,25 @@ def calculate_aspect_ratio(all_x_coords, all_y_coords):
     return (size, aspect_ratio) if aspect_ratio > 1 else (size / aspect_ratio, size)
 
 
-def create_colorbar(fig, ax, dataset, coloring_col, cmap):
+def create_colorbar(fig, ax, dataset, coloring_col, cmap, title=""):
     divider = make_axes_locatable(ax)
-    divider.append_axes("right", size="2%", pad=2.15)
+    divider.append_axes("right", size="2%", pad=5.55)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=dataset[coloring_col].min(), vmax=dataset[coloring_col].max()))
 
-    colorbar_ax = fig.add_axes([0.945, 0.43, 0.02, 0.55])
+    colorbar_ax = fig.add_axes([0.9, 0.4, 0.02, 0.38])
     colorbar = fig.colorbar(sm, cax=colorbar_ax)
 
     min_tick = dataset[coloring_col].min()
     max_tick = dataset[coloring_col].max()
-    colorbar.set_ticks([min_tick, max_tick])
+    colorbar.set_ticks([min_tick*1.05, max_tick*0.95])
     colorbar.ax.set_yticklabels([str(round(min_tick,1)), str(round(max_tick,1))])
     colorbar.ax.tick_params(labelsize=44)
+    
+
+    colorbar.ax.annotate(title , xy=(0.5, 1.1), xycoords='axes fraction', fontsize=44,
+                     xytext=(-50, 15), textcoords='offset points',
+                     ha='left', va='bottom')
 
     for a in fig.axes:
         if a is not ax and a is not colorbar_ax:
@@ -263,7 +268,7 @@ def configure_plot(ax, all_x_coords, all_y_coords):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset):
+def createActivityNodePlot(dataset, colorbar_title=""):
     coloring_col = dataset.columns[0]
 
     # not very elegant
@@ -288,7 +293,7 @@ def createActivityNodePlot(dataset):
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], ['-', '+', '+'])
 
     draw_polygons(ax, 
