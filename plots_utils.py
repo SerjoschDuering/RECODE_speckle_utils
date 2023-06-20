@@ -8,7 +8,7 @@ import math
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import matplotlib.colors as colors
+import matplotlib.colors as colors, ListedColormap
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype
@@ -268,7 +268,7 @@ def configure_plot(ax, all_x_coords, all_y_coords):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset, colorbar_title=""):
+def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm"):
     coloring_col = dataset.columns[0]
 
     # not very elegant
@@ -285,7 +285,10 @@ def createActivityNodePlot(dataset, colorbar_title=""):
     fig, ax = plt.subplots(figsize=figsize)
 
     # color map
-    cmap = plt.cm.get_cmap('coolwarm')
+    if type(color) == type([]):
+        cmap = ListedColormap(color)
+    else:
+        cmap = plt.cm.get_cmap(color)
 
     # Activity Node geometry
     style_dict_an = {'linewidth': 1, 'edgecolor': "Black"} 
@@ -320,3 +323,16 @@ def createActivityNodePlot(dataset, colorbar_title=""):
 
     configure_plot(ax, all_x_coords, all_y_coords)
     return fig, ax
+
+
+
+def gh_color_blueRed():
+    # grasshoper color scheme 
+    color_list = [[15,16,115],
+            [177,198,242],
+            [251,244,121],
+            [222,140,61],
+            [183,60,34]]
+    # Scale RGB values to [0,1] range
+    color_list = [[c/255. for c in color] for color in color_list]
+    return color_list
