@@ -9,7 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype
@@ -287,7 +287,8 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm"):
 
     # color map
     if type(color) == type([]):
-        cmap = ListedColormap(color)
+        
+        cmap = LinearSegmentedColormap.from_list('custom_color', color)
     else:
         cmap = plt.cm.get_cmap(color)
 
