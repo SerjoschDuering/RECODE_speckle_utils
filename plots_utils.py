@@ -8,7 +8,8 @@ import math
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import matplotlib.colors as colors, ListedColormap
+import matplotlib.colors as colors
+from matplotlib.colors import ListedColormap
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype
