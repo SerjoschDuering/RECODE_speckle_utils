@@ -538,3 +538,39 @@ def rebuildAnalysisInfoDict(analysisInfo):
         newkey = curKey.split("++")[0]
         analysisInfoDict[newkey] = analysisInfo[0][curKey]
     return analysisInfoDict
+
+
+def specklePolyline2BokehPatches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
+    """
+    Converts Speckle objects' polyline information into a format suitable for Bokeh patches.
+
+    Args:
+        speckle_objs (list): A list of Speckle objects.
+        pth_to_geo (str, optional): The path to the polyline geometric information in the Speckle objects. Defaults to "curves".
+        id_key (str, optional): The key for object identification. Defaults to "uuid".
+
+    Returns:
+        DataFrame: A pandas DataFrame with three columns - "uuid", "patches_x", and "patches_y". Each row corresponds to a Speckle object.
+                    "uuid" column contains the object's identifier.
+                    "patches_x" and "patches_y" columns contain lists of x and y coordinates of the polyline points respectively.
+
+    This function iterates over the given Speckle objects, retrieves the polyline geometric information and the object's id from each Speckle object, 
+    and formats this information into a format suitable for Bokeh or matplotlib patches. The formatted information is stored in a dictionary with three lists 
+    corresponding to the "uuid", "patches_x", and "patches_y", and this dictionary is then converted into a pandas DataFrame.
+    """
+    patchesDict = {"uuid":[], "patches_x":[], "patches_y":[]}
+
+    for obj in speckle_objs:
+        obj_geo = obj[pth_to_geo]
+        obj_pts = Polyline.as_points(obj_geo)
+        coorX = []
+        coorY = []
+        for pt in obj_pts:
+            coorX.append(pt.x)
+            coorY.append(pt.y)
+
+        patchesDict["patches_x"].append(coorX)
+        patchesDict["patches_y"].append(coorY)
+        patchesDict["uuid"].append(obj[id_key])
+
+    return pd.DataFrame(patchesDict)
