@@ -202,13 +202,13 @@ def calculate_aspect_ratio(all_x_coords, all_y_coords):
     return (size, aspect_ratio) if aspect_ratio > 1 else (size / aspect_ratio, size)
 
 
-def create_colorbar(fig, ax, dataset, coloring_col, cmap, title=""):
+def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioning = [0.9, 0.4, 0.02, 0.38]):
     divider = make_axes_locatable(ax)
     divider.append_axes("right", size="2%", pad=5.55)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=dataset[coloring_col].min(), vmax=dataset[coloring_col].max()))
 
-    colorbar_ax = fig.add_axes([0.9, 0.4, 0.02, 0.38])
+    colorbar_ax = fig.add_axes(cb_positioning)
     colorbar = fig.colorbar(sm, cax=colorbar_ax)
 
     min_tick = dataset[coloring_col].min()
@@ -278,7 +278,7 @@ def configure_plot(ax, all_x_coords, all_y_coords):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None):
+def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None, cb_positioning = [0.9, 0.4, 0.02, 0.38]):
     
     if data_col == None:
         coloring_col = dataset.columns[0]
@@ -319,7 +319,7 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], ['-', '+', '+'])
 
     draw_polygons(ax, 
