@@ -229,26 +229,35 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title=""):
     return sm, colorbar
 
 
+
 def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None, coloring_col=None):
     if drawing_order is None:
         drawing_order = dataset.index
     for idx in drawing_order:
         row  = dataset.loc[idx]
-        
-        # Check if the row is not None and the string length is greater than 2
-        if row[x_cord_name] is not None and len(str(row[x_cord_name])) > 2:
-            try:
-                patch_x_list = [float(i) for i in row[x_cord_name][1:-1].split(",")]
-                patch_y_list = [float(i) for i in row[y_cord_name][1:-1].split(",")]
 
+        # If it's a string, convert to list, if list, use directly
+        if isinstance(row[x_cord_name], str) and len(row[x_cord_name]) > 2:
+            patch_x_list = [float(i) for i in row[x_cord_name][1:-1].split(",")]
+        elif isinstance(row[x_cord_name], list):
+            patch_x_list = row[x_cord_name]
+
+        if isinstance(row[y_cord_name], str) and len(row[y_cord_name]) > 2:
+            patch_y_list = [float(i) for i in row[y_cord_name][1:-1].split(",")]
+        elif isinstance(row[y_cord_name], list):
+            patch_y_list = row[y_cord_name]
+
+        # Check if the row is not None and the length is greater than 0
+        if patch_x_list is not None and patch_y_list is not None and len(patch_x_list) > 0 and len(patch_y_list) > 0:
+            try:
                 if patch_x_list[0] != patch_x_list[-1] and patch_y_list[0] != patch_y_list[-1]:
                     patch_x_list.append(patch_x_list[0])
                     patch_y_list.append(patch_y_list[0])
 
                 if sm is not None:
-                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
                 else:
-                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict)
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict)
 
                 ax.add_patch(polygon)
             except Exception as e:
