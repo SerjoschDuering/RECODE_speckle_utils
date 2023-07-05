@@ -139,25 +139,25 @@ def getSpeckleGlobals(stream_id, client):
             print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
             analysisInfo = None
 
-    try:
-        analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
-    except json.JSONDecodeError as e:
-        print(f"Error decoding analysisGroups: {e}")
-        print("Error position and surrounding text:")
-        print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
-        analysisGroups = None
+        try:
+            analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
+        except json.JSONDecodeError as e:
+            print(f"Error decoding analysisGroups: {e}")
+            print("Error position and surrounding text:")
+            print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
+            analysisGroups = None
 
 
-        # extract analysis names 
-        analysis_names = []
-        analysis_uuid = []
-        [(analysis_names.append(key.split("++")[0]),analysis_uuid.append(key.split("++")[1]) ) for key in analysisInfo.keys()]
+            # extract analysis names 
+            analysis_names = []
+            analysis_uuid = []
+            [(analysis_names.append(key.split("++")[0]),analysis_uuid.append(key.split("++")[1]) ) for key in analysisInfo.keys()]
 
-        # print extracted results
-        print("there are global dictionaries with additional information for each analysis")
-        print("<analysisGroups> -> ", [list(curgrp.keys()) for curgrp in analysisGroups])
-        print("<analysis_names> -> ", analysis_names)                       
-        print("<analysis_uuid>  -> ", analysis_uuid)
+            # print extracted results
+            print("there are global dictionaries with additional information for each analysis")
+            print("<analysisGroups> -> ", [list(curgrp.keys()) for curgrp in analysisGroups])
+            print("<analysis_names> -> ", analysis_names)                       
+            print("<analysis_uuid>  -> ", analysis_uuid)
     except Exception as e:  # catch exception as 'e'
         analysisInfo = None
         analysisGroups = None
