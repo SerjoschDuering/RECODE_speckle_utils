@@ -278,8 +278,12 @@ def configure_plot(ax, all_x_coords, all_y_coords):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm"):
-    coloring_col = dataset.columns[0]
+def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None):
+    
+    if data_col == None:
+        coloring_col = dataset.columns[0]
+    else:
+        coloring_col = data_col
 
     # not very elegant
     all_x_coords = []
