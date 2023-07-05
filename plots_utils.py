@@ -264,13 +264,16 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
                print(f"Error occurred: {e}")
 
 
-def configure_plot(ax, all_x_coords, all_y_coords):
+def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.05):
+    x_range = max(all_x_coords) - min(all_x_coords)
+    y_range = max(all_y_coords) - min(all_y_coords)
+    
     ax.set_aspect('equal')
-    ax.set_xlim(min(all_x_coords), max(all_x_coords))
-    ax.set_ylim(min(all_y_coords), max(all_y_coords))
+    ax.set_xlim([min(all_x_coords) - buffer*x_range, max(all_x_coords) + buffer*x_range])
+    ax.set_ylim([min(all_y_coords) - buffer*y_range, max(all_y_coords) + buffer*y_range])
     ax.set_xticks([])
     ax.set_yticks([])
-    for spine in plt.gca().spines.values():
+    for spine in ax.spines.values():
         spine.set_visible(False)
 
 
@@ -302,7 +305,7 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
             patch_y_list = row["patches_y_AN"]
         all_x_coords.extend(patch_x_list)
         all_y_coords.extend(patch_y_list)
-
+    
     figsize = calculate_aspect_ratio(all_x_coords, all_y_coords)
     fig, ax = plt.subplots(figsize=figsize)
 
