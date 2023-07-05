@@ -540,7 +540,7 @@ def rebuildAnalysisInfoDict(analysisInfo):
     return analysisInfoDict
 
 
-def specklePolyline2BokehPatches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
+def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
     """
     Converts Speckle objects' polyline information into a format suitable for Bokeh patches.
 
