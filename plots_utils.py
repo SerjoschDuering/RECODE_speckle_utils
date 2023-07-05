@@ -185,6 +185,7 @@ def histogramScore(inp_data,columName, cull_invalid=True):
 
 
 def get_drawing_order(dataset, order_of_importance, sorting_direction):
+    # for activity nodes 
     temp_dataset = dataset.copy()
     temp_dataset[['id1', 'id2', 'id3']] = temp_dataset['ids'].str.split(';', expand=True).astype(int)
     columns_ordered = [f'id{i}' for i in order_of_importance]
@@ -228,8 +229,7 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title=""):
     return sm, colorbar
 
 
-def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None,coloring_col=None):
-    
+def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None, coloring_col=None):
     if drawing_order is None:
         drawing_order = dataset.index
     for idx in drawing_order:
@@ -251,8 +251,8 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
                     polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)),**style_dict)
 
                 ax.add_patch(polygon)
-            except:
-               pass
+            except Exception as e:
+               print(f"Error occurred: {e}")
 
 
 def configure_plot(ax, all_x_coords, all_y_coords):
