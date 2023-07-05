@@ -231,6 +231,7 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioni
 
 
 def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None, coloring_col=None):
+    
     if drawing_order is None:
         drawing_order = dataset.index
     for idx in drawing_order:
@@ -264,7 +265,7 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
                print(f"Error occurred: {e}")
 
 
-def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.05):
+def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.03):
     x_range = max(all_x_coords) - min(all_x_coords)
     y_range = max(all_y_coords) - min(all_y_coords)
     
@@ -323,7 +324,7 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
 
     if color_data_exists:
         sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning)
-    drawing_order = get_drawing_order(dataset, [1, 3, 2], ['-', '+', '+'])
+    drawing_order = get_drawing_order(dataset, [1, 3, 2], ['+', '+', '+'])
 
     draw_polygons(ax, 
                 dataset, 
