@@ -286,8 +286,16 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm"):
     all_y_coords = []
 
     for idx, row in dataset.iterrows():
-        patch_x_list = [float(i) for i in row['patches_x_AN'][1:-1].split(",")]
-        patch_y_list = [float(i) for i in row['patches_y_AN'][1:-1].split(",")]
+        # If it's a string, convert to list, if list, use directly
+        if isinstance(row["patches_x_AN"], str) and len(row["patches_x_AN"]) > 2:
+            patch_x_list = [float(i) for i in row["patches_x_AN"][1:-1].split(",")]
+        elif isinstance(row["patches_x_AN"], list):
+            patch_x_list = row["patches_x_AN"]
+
+        if isinstance(row["patches_y_AN"], str) and len(row["patches_y_AN"]) > 2:
+            patch_y_list = [float(i) for i in row["patches_y_AN"][1:-1].split(",")]
+        elif isinstance(row["patches_y_AN"], list):
+            patch_y_list = row["patches_y_AN"]
         all_x_coords.extend(patch_x_list)
         all_y_coords.extend(patch_y_list)
 
