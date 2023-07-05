@@ -162,9 +162,9 @@ def histogramScore(inp_data,columName, cull_invalid=True):
   ax.axvline(x=mean_val, ymax=0.85, linestyle='dotted', color='black')
 
   # Add a text tag at the end of the line  
-  ax.text(mean_val, ax.get_ylim()[1] * 0.98,"Mean", weight = "bold", size=30, ha="center", 
+  ax.text(mean_val, ax.get_ylim()[1] * 0.98,"Mean", weight = "bold", size=25, ha="center", 
             bbox=dict(facecolor='white', edgecolor='white', boxstyle='round,pad=0.2'))
-  ax.text(mean_val, ax.get_ylim()[1] * 0.85, str(round(mean_val,1)) + " from " + str(max_val), ha='center', va='bottom', size=30,
+  ax.text(mean_val, ax.get_ylim()[1] * 0.85, str(round(mean_val,1)) + " from " + str(max_val), ha='center', va='bottom', size=25,
             bbox=dict(facecolor='white', edgecolor='white', boxstyle='round,pad=0.2'))
 
   # Set the figure title and place it on the top left corner
