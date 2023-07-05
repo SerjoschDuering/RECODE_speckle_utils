@@ -139,7 +139,7 @@ def getSpeckleGlobals(stream_id, client):
             return error_line, pointer_line
 
         try:
-            analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
+            analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"').replace("None", "null"))
         except json.JSONDecodeError as e:
             print(f"Error decoding analysisInfo: {e}")
             error_line, pointer_line = get_error_context(e)
@@ -149,7 +149,7 @@ def getSpeckleGlobals(stream_id, client):
             analysisInfo = None
 
         try:
-            analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
+            analysisGroups = [json.loads(gr.replace("'", '"').replace("None", "null")) for gr in globs["analysisGroups"]["@{0}"]]
         except json.JSONDecodeError as e:
             print(f"Error decoding analysisGroups: {e}")
             error_line, pointer_line = get_error_context(e)
