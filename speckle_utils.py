@@ -131,33 +131,46 @@ def getSpeckleGlobals(stream_id, client):
         #analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
         #analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
 
+        def get_error_context(e, context=100):
+            start = max(0, e.pos - context)
+            end = e.pos + context
+            error_line = e.doc[start:end]
+            pointer_line = ' ' * (e.pos - start - 1) + '^'
+            return error_line, pointer_line
+
         try:
             analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
         except json.JSONDecodeError as e:
             print(f"Error decoding analysisInfo: {e}")
+            error_line, pointer_line = get_error_context(e)
             print("Error position and surrounding text:")
-            print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
+            print(error_line)
+            print(pointer_line)
             analysisInfo = None
 
         try:
             analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
         except json.JSONDecodeError as e:
             print(f"Error decoding analysisGroups: {e}")
+            error_line, pointer_line = get_error_context(e)
             print("Error position and surrounding text:")
-            print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
+            print(error_line)
+            print(pointer_line)
             analysisGroups = None
 
 
-            # extract analysis names 
-            analysis_names = []
-            analysis_uuid = []
-            [(analysis_names.append(key.split("++")[0]),analysis_uuid.append(key.split("++")[1]) ) for key in analysisInfo.keys()]
 
-            # print extracted results
-            print("there are global dictionaries with additional information for each analysis")
-            print("<analysisGroups> -> ", [list(curgrp.keys()) for curgrp in analysisGroups])
-            print("<analysis_names> -> ", analysis_names)                       
-            print("<analysis_uuid>  -> ", analysis_uuid)
+        # extract analysis names 
+        analysis_names = []
+        analysis_uuid = []
+        [(analysis_names.append(key.split("++")[0]),analysis_uuid.append(key.split("++")[1]) ) for key in analysisInfo.keys()]
+
+
+        # print extracted results
+        print("there are global dictionaries with additional information for each analysis")
+        print("<analysisGroups> -> ", [list(curgrp.keys()) for curgrp in analysisGroups])
+        print("<analysis_names> -> ", analysis_names)                       
+        print("<analysis_uuid>  -> ", analysis_uuid)
     except Exception as e:  # catch exception as 'e'
         analysisInfo = None
         analysisGroups = None
