@@ -9,7 +9,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype
@@ -285,12 +285,10 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
     else:
         coloring_col = data_col
 
-    # not very elegant
     all_x_coords = []
     all_y_coords = []
 
     for idx, row in dataset.iterrows():
-        # If it's a string, convert to list, if list, use directly
         if isinstance(row["patches_x_AN"], str) and len(row["patches_x_AN"]) > 2:
             patch_x_list = [float(i) for i in row["patches_x_AN"][1:-1].split(",")]
         elif isinstance(row["patches_x_AN"], list):
@@ -300,26 +298,25 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
             patch_y_list = [float(i) for i in row["patches_y_AN"][1:-1].split(",")]
         elif isinstance(row["patches_y_AN"], list):
             patch_y_list = row["patches_y_AN"]
+        
         all_x_coords.extend(patch_x_list)
         all_y_coords.extend(patch_y_list)
 
     figsize = calculate_aspect_ratio(all_x_coords, all_y_coords)
     fig, ax = plt.subplots(figsize=figsize)
 
-    # color map
-    if type(color) == type([]):
-        
+    if isinstance(color, list):      
         cmap = LinearSegmentedColormap.from_list('custom_color', color)
     else:
         cmap = plt.cm.get_cmap(color)
 
-    # Activity Node geometry
     style_dict_an = {'linewidth': 1, 'edgecolor': "Black"} 
 
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title)
+        norm = Normalize(vmin=dataset[coloring_col].min(), vmax=dataset[coloring_col].max())
+
     drawing_order = get_drawing_order(dataset, [1, 3, 2], ['-', '+', '+'])
 
     draw_polygons(ax, 
@@ -327,13 +324,12 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
                 "patches_x_AN", 
                 "patches_y_AN", 
                 style_dict_an, 
-                sm,
+                norm,
                 drawing_order,
                 cmap,
                 coloring_col)
 
     style_dict_bridges = {'linewidth': 1, 'edgecolor': "Black", 'facecolor':"Black"} 
-
 
     draw_polygons(ax, 
                 dataset, 
