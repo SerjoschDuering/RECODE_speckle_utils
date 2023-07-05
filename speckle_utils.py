@@ -540,7 +540,7 @@ def rebuildAnalysisInfoDict(analysisInfo):
     return analysisInfoDict
 
 
-def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
+def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key=None):
     """
     Converts Speckle objects' polyline information into a format suitable for Bokeh patches.
 
@@ -558,7 +558,9 @@ def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
     and formats this information into a format suitable for Bokeh or matplotlib patches. The formatted information is stored in a dictionary with three lists 
     corresponding to the "uuid", "patches_x", and "patches_y", and this dictionary is then converted into a pandas DataFrame.
     """
-    patchesDict = {"uuid":[], "patches_x":[], "patches_y":[]}
+    patchesDict = {"patches_x":[], "patches_y":[]}
+    if id_key != None:
+        patchesDict[id_key] = []
 
     for obj in speckle_objs:
         obj_geo = obj[pth_to_geo]
@@ -571,6 +573,7 @@ def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key="uuid"):
 
         patchesDict["patches_x"].append(coorX)
         patchesDict["patches_y"].append(coorY)
-        patchesDict["uuid"].append(obj[id_key])
+        if id_key != None:
+            patchesDict[id_key].append(obj[id_key])
 
     return pd.DataFrame(patchesDict)
