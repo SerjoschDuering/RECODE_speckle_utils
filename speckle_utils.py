@@ -118,7 +118,7 @@ def getSpeckleGlobals(stream_id, client):
     global attributes, extracts analysis names and UUIDs.
     If no globals are found in the speckle stream, it returns None for both analysisInfo and analysisGroups.
     """
- # get the latest commit
+    # get the latest commit
     try:
         # speckle stream globals
         branchGlob = client.branch.get(stream_id, "globals")
@@ -141,12 +141,14 @@ def getSpeckleGlobals(stream_id, client):
         print("<analysisGroups> -> ", [list(curgrp.keys()) for curgrp in analysisGroups])
         print("<analysis_names> -> ", analysis_names)                       
         print("<analysis_uuid>  -> ", analysis_uuid)
-    except:
+    except Exception as e:  # catch exception as 'e'
         analysisInfo = None
         analysisGroups = None
         print("No GlOBALS FOUND")
+        print(f"Error: {e}")  # print error description
   
     return analysisInfo, analysisGroups
+
 
 
 #function to extract non geometry data from speckle 
