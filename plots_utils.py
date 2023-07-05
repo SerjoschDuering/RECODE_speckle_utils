@@ -168,7 +168,7 @@ def histogramScore(inp_data,columName, cull_invalid=True):
             bbox=dict(facecolor='white', edgecolor='white', boxstyle='round,pad=0.2'))
 
   # Set the figure title and place it on the top left corner
-  ax.set_title(columName, loc='left', color="lightgrey")
+  ax.set_title(columName, loc='left', color="lightgrey", alpha=0.3)
 
   # Make the y-axis tick labels smaller
   ax.tick_params(axis='y', labelsize=8)
