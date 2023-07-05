@@ -218,7 +218,7 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioni
     colorbar.ax.tick_params(labelsize=44)
     
 
-    colorbar.ax.annotate(title , xy=(0.5, 1.1), xycoords='axes fraction', fontsize=44,
+    colorbar.ax.annotate(title , xy=(0.55, 1.1), xycoords='axes fraction', fontsize=44,
                      xytext=(-45, 15), textcoords='offset points',
                      ha='left', va='bottom')
 
