@@ -282,7 +282,7 @@ def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.03):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None, cb_positioning = [0.9, 0.4, 0.02, 0.38]):
+def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None, cb_positioning = [0.9, 0.4, 0.02, 0.38], draw_oder_instruction=['-', '-', '+']):
     
     if data_col == None:
         coloring_col = dataset.columns[0]
@@ -324,7 +324,7 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
 
     if color_data_exists:
         sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning)
-    drawing_order = get_drawing_order(dataset, [1, 3, 2], ['+', '+', '+'])
+    drawing_order = get_drawing_order(dataset, [1, 3, 2], draw_oder_instruction)
 
     draw_polygons(ax, 
                 dataset, 
