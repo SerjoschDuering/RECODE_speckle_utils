@@ -128,8 +128,25 @@ def getSpeckleGlobals(stream_id, client):
         globs = operations.receive(latest_commit_Glob.referencedObject, transport)
         
         # access and parse globals
-        analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
+        #analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
+        #analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
+
+        try:
+            analysisInfo = json.loads(globs["analysisInfo"]["@{0;0;0;0}"][0].replace("'", '"'))
+        except json.JSONDecodeError as e:
+            print(f"Error decoding analysisInfo: {e}")
+            print("Error position and surrounding text:")
+            print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
+            analysisInfo = None
+
+    try:
         analysisGroups = [json.loads(gr.replace("'", '"')) for gr in globs["analysisGroups"]["@{0}"]]
+    except json.JSONDecodeError as e:
+        print(f"Error decoding analysisGroups: {e}")
+        print("Error position and surrounding text:")
+        print(e.doc[max(0, e.pos-100):e.pos+100])  # Print 100 characters before and after error position
+        analysisGroups = None
+
 
         # extract analysis names 
         analysis_names = []
