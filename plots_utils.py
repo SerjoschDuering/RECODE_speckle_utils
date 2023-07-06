@@ -163,7 +163,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', '
 
 
   # Define the properties for the boxplot elements
-  boxprops = {'edgecolor': 'black', 'linewidth': 2, 'facecolor': 'white', 'alpha':0.2}
+  boxprops = {'edgecolor': 'black', 'linewidth': 2, 'facecolor': 'white', 'alpha':0.5}
   medianprops = {'color': 'gray', 'linewidth': 0}
   whiskerprops = {'color': 'black', 'linewidth': 1}
   capprops = {'color': 'black', 'linewidth': 2}
@@ -185,7 +185,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', '
               )
 
   # Set the figure title and place it on the top left corner
-  ax.set_title(columName, loc='left', color="lightgrey")
+  ax.set_title(columName, loc='left', color="lightgrey", alpha=0.2)
 
   # Remove the black outline from the figure
   for spine in ax.spines.values():
