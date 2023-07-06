@@ -103,7 +103,7 @@ def boxPlot(inp_data, columName, cull_invalid=True):
               )
 
   # Set the figure title and place it on the top left corner
-  ax.set_title(columName, loc='left', color="lightgrey")
+  ax.set_title(columName, loc='left', color="lightgrey", alpha =0.2)
 
   # Remove the black outline from the figure
   for spine in ax.spines.values():
