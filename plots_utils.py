@@ -150,7 +150,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', '
   sm = ScalarMappable(norm=norm, cmap=cmap2)
 
   # Draw a vertical line at Q3
-  cax.axvline(Q3*0.96, color='k', linewidth=3)
+  cax.axvline(Q3*0.95, color='k', linewidth=3)
   cbar = fig.colorbar(sm, cax=cax, orientation='horizontal', ticks=[])
 
   # Define the positions and labels for the x ticks
