@@ -9,7 +9,8 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap, Normalize
+from matplotlib.cm import ScalarMappable
 import pandas as pd
 import numpy as np
 from pandas.api.types import is_numeric_dtype
@@ -144,6 +145,9 @@ def boxPlo_colorbar(inp_data, columName, cull_invalid=True):
   cmap1 = LinearSegmentedColormap.from_list("mycmap", ['blue', 'red'])
   colors = np.concatenate((cmap1(np.linspace(0, 1, ratio)), np.repeat([cmap1(1.)], 100 - ratio, axis=0)))
   cmap2 = ListedColormap(colors)
+
+  norm = Normalize(vmin=min_val, vmax=max_val)
+  sm = ScalarMappable(norm=norm, cmap=cmap2)
 
   # Draw a vertical line at Q3
   cax.axvline(Q3*0.98, color='k', linewidth=3)
