@@ -120,12 +120,12 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 
-def boxPlo_colorbar(inp_data, columName, cull_invalid=True):
+def boxPlot_colorbar(inp_data, columName, cull_invalid=True):
   if cull_invalid == True:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
 
   # Create a new figure
-    fig, (cax, ax) = plt.subplots(nrows=2, figsize=(10,3), dpi=200,
+    fig, (cax, ax) = plt.subplots(nrows=2, figsize=(10,3), dpi=75,
         gridspec_kw={'height_ratios': [0.1, 1], 'hspace': 0.02}) # Adjust hspace for less space between plots
 
 
