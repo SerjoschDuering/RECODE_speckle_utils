@@ -14,6 +14,7 @@ def helper():
     print("______________________________________________________________________")
     print("available functions:")
     print("cleanData(data, mode='drop', num_only=False) -> clean dataframes, series or numpy arrays" )
+    print( """ sort_and_match_df(A, B, uuid_column) -> merges two dataframes by a common uuid comon (best practice: always use this)"""
     print("transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False) -> transform data to a score based on percentiles and provided points") 
     print("colab_create_directory(base_name) -> create a directory with the given name, if it already exists, add a number to the end of the name, usefull for colab")
     print("colab_zip_download_folder(dir_name) -> zips and downloads a directory from colab. will only work in google colaboratory ")
