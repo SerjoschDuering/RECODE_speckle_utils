@@ -120,7 +120,7 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 
-def boxPlot_colorbar(inp_data, columName, cull_invalid=True):
+def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', 'red']):
   if cull_invalid == True:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
 
@@ -142,7 +142,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True):
   ratio = int(np.ceil((Q3 - min_val) / (max_val - min_val) * 100))
 
   # Create a custom colormap
-  cmap1 = LinearSegmentedColormap.from_list("mycmap", ['blue', 'red'])
+  cmap1 = LinearSegmentedColormap.from_list("mycmap", color)
   colors = np.concatenate((cmap1(np.linspace(0, 1, ratio)), np.repeat([cmap1(1.)], 100 - ratio, axis=0)))
   cmap2 = ListedColormap(colors)
 
@@ -150,7 +150,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True):
   sm = ScalarMappable(norm=norm, cmap=cmap2)
 
   # Draw a vertical line at Q3
-  cax.axvline(Q3*0.98, color='k', linewidth=3)
+  cax.axvline(Q3*0.96, color='k', linewidth=3)
   cbar = fig.colorbar(sm, cax=cax, orientation='horizontal', ticks=[])
 
   # Define the positions and labels for the x ticks
