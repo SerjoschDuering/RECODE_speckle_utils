@@ -80,6 +80,21 @@ def cleanData(data, mode="drop", num_only=False):
     return data
 
 
+def sort_and_match_df(A, B, uuid_column):
+    """
+    Sorts and matches DataFrame B to A based on a shared uuid_column.
+    
+    Parameters:
+    A, B (DataFrame): Input DataFrames to be sorted and matched.
+    uuid_column (str): Shared column for matching rows.
+    
+    Returns:
+    DataFrame: Resulting DataFrame after left join of A and B on uuid_column.
+    """
+    merged_df = pd.merge(A, B, on=uuid_column, how='left')
+    return merged_df
+
+
 def transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False):
     """
         Transforms data to a score based on percentiles and provided points.
