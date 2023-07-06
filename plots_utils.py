@@ -119,6 +119,88 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 
+def boxPlo_colorbar(inp_data, columName, cull_invalid=True):
+  if cull_invalid == True:
+    inp_data = cleanData(inp_data, mode="drop", num_only=True)
+
+  # Create a new figure
+    fig, (cax, ax) = plt.subplots(nrows=2, figsize=(10,3), dpi=200,
+        gridspec_kw={'height_ratios': [0.1, 1], 'hspace': 0.02}) # Adjust hspace for less space between plots
+
+
+  # Set the style to white background
+  sns.set_style("white")
+
+  # Calculate the min, max, Q1, and Q3 of the data
+  min_val = np.min(inp_data)
+  max_val = np.max(inp_data)
+  Q1 = np.percentile(inp_data, 25)
+  Q3 = np.percentile(inp_data, 75)
+  mean_val = np.mean(inp_data)
+
+  ratio = int(np.ceil((Q3 - min_val) / (max_val - min_val) * 100))
+
+  # Create a custom colormap
+  cmap1 = LinearSegmentedColormap.from_list("mycmap", ['blue', 'red'])
+  colors = np.concatenate((cmap1(np.linspace(0, 1, ratio)), np.repeat([cmap1(1.)], 100 - ratio, axis=0)))
+  cmap2 = ListedColormap(colors)
+
+  # Draw a vertical line at Q3
+  cax.axvline(Q3*0.98, color='k', linewidth=3)
+  cbar = fig.colorbar(sm, cax=cax, orientation='horizontal', ticks=[])
+
+  # Define the positions and labels for the x ticks
+  x_ticks = [] #[min_val, mean_val, Q3, max_val]
+  x_tick_labels =[] #[ round(v,1) for v in x_ticks]
+
+  # Add vertical lines at mean and Q3
+  ax.vlines([Q3], ymin=-0.35, ymax=0.35, colors='black', linewidth=3)
+  ax.text(Q3, 0.83, '  75th percentile', ha='left', va='top', transform=ax.get_xaxis_transform(), fontsize=14)
+
+
+  # Define the properties for the boxplot elements
+  boxprops = {'edgecolor': 'black', 'linewidth': 2, 'facecolor': 'white', 'alpha':0.5}
+  medianprops = {'color': 'gray', 'linewidth': 0}
+  whiskerprops = {'color': 'black', 'linewidth': 1}
+  capprops = {'color': 'black', 'linewidth': 2}
+  flierprops = {'marker':'o', 'markersize':3, 'color':'white',  'markerfacecolor':'lightgray'}
+  meanprops = {'color': 'black', 'linewidth': 1.0}
+  kwargs = {'meanline': True, 'showmeans': True}
+
+  # Create the boxplot
+  bplot = sns.boxplot(x=inp_data, 
+              boxprops=boxprops, 
+              medianprops=medianprops, 
+              whiskerprops=whiskerprops, 
+              capprops=capprops,
+              flierprops=flierprops,
+              meanprops=meanprops,
+              width=0.3,
+              ax=ax,
+              **kwargs
+              )
+
+  # Set the figure title and place it on the top left corner
+  ax.set_title(columName, loc='left', color="lightgrey")
+
+  # Remove the black outline from the figure
+  for spine in ax.spines.values():
+      spine.set_visible(False)
+
+  # Set the x-axis ticks and labels
+  ax.set_xticks(x_ticks)
+  ax.set_xticklabels(x_tick_labels)
+
+  # Remove the x-axis label
+  ax.set_xlabel('')
+    
+  return fig, ax
+
+
+
+
+
+
 def histogramScore(inp_data,columName, cull_invalid=True):
   # Create a new figure
   if cull_invalid:
