@@ -163,7 +163,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', '
 
 
   # Define the properties for the boxplot elements
-  boxprops = {'edgecolor': 'black', 'linewidth': 2, 'facecolor': 'white', 'alpha':0.5}
+  boxprops = {'edgecolor': 'black', 'linewidth': 2, 'facecolor': 'white', 'alpha':0.2}
   medianprops = {'color': 'gray', 'linewidth': 0}
   whiskerprops = {'color': 'black', 'linewidth': 1}
   capprops = {'color': 'black', 'linewidth': 2}
@@ -171,7 +171,7 @@ def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', '
   meanprops = {'color': 'black', 'linewidth': 1.0}
   kwargs = {'meanline': True, 'showmeans': True}
 
-  # Create the boxplot
+  # Create the boxplo
   bplot = sns.boxplot(x=inp_data, 
               boxprops=boxprops, 
               medianprops=medianprops, 
