@@ -14,8 +14,10 @@ try:
 except:
     pass
 
+import requests
+from datetime import datetime
 import copy
-# import openai
+
 
 # HELP FUNCTION ===============================================================
 def helper():
@@ -30,6 +32,7 @@ def helper():
     print("getSpeckleGlobals(stream_id, client)")
     print("get_dataframe(objects_raw, return_original_df)")
     print("updateStreamAnalysis(stream_id, new_data, branch_name, geometryGroupPath, match_by_id, openai_key, return_original)")
+    print("there are some more function available not documented fully yet, including updating a notion database")
     print("______________________________________________________________________")
     print("for detailed help call >>> help(speckle_utils.function_name) <<< ")
     print("______________________________________________________________________")
@@ -577,3 +580,59 @@ def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key=None):
             patchesDict[id_key].append(obj[id_key])
 
     return pd.DataFrame(patchesDict)
+
+
+#================= NOTION INTEGRATION ============================
+headers = {
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json"
+}
+
+def get_page_id(token, database_id, name):
+    headers['Authorization'] = "Bearer " + token
+    # Send a POST request to the Notion API
+    response = requests.post(f"https://api.notion.com/v1/databases/{database_id}/query", headers=headers)
+
+    # Load the response data
+    data = json.loads(response.text)
+
+    # Check each page in the results
+    for page in data['results']:
+        # If the name matches, return the ID
+        if page['properties']['name']['title'][0]['text']['content'] == name:
+            return page['id']
+
+    # If no match was found, return None
+    return None
+
+def add_or_update_page(token, database_id, name, type, time_updated, comment, speckle_link):
+    # Format time_updated as a string 'YYYY-MM-DD'
+    date_string = time_updated.strftime('%Y-%m-%d')
+
+    # Construct the data payload
+    data = {
+        'parent': {'database_id': database_id},
+        'properties': {
+            'name': {'title': [{'text': {'content': name}}]},
+            'type': {'rich_text': [{'text': {'content': type}}]},
+            'time_updated': {'date': {'start': date_string}},
+            'comment': {'rich_text': [{'text': {'content': comment}}]},
+            'speckle_link': {'rich_text': [{'text': {'content': speckle_link}}]}
+        }
+    }
+
+    # Check if a page with this name already exists
+    page_id = get_page_id(token, database_id, name)
+
+    headers['Authorization'] = "Bearer " + token
+    if page_id:
+        # If the page exists, send a PATCH request to update it
+        response = requests.patch(f"https://api.notion.com/v1/pages/{page_id}", headers=headers, data=json.dumps(data))
+    else:
+        # If the page doesn't exist, send a POST request to create it
+        response = requests.post("https://api.notion.com/v1/pages", headers=headers, data=json.dumps(data))
+    
+    print(response.text)
+
+# Use the function
+#add_or_update_page('your_token', 'your_database_id', 'New Title', 'New Type', datetime.now(), 'This is a comment', 'https://your-link.com')
