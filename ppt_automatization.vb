@@ -1,3 +1,5 @@
+Option Explicit
+
 Function IndexOf(col As Collection, val As Variant) As Integer
     Dim i As Integer
     For i = 1 To col.Count
@@ -28,7 +30,6 @@ Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
     boldEndPos = InStr(txt, boldEnd)
     While boldStartPos > 0 And boldEndPos > 0
         With textRange.Characters(boldStartPos + Len(boldStart), boldEndPos - 1).Font
-
             .Bold = msoTrue
         End With
         txt = Replace(txt, boldStart, "", 1, 1)
@@ -54,8 +55,6 @@ Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
     textRange.Text = txt
 End Sub
 
-
-
 Sub ReplaceObjects()
 
     Dim fso As New FileSystemObject
@@ -77,6 +76,7 @@ Sub ReplaceObjects()
     End With
 
     ' 2. Index all files within the directory and its subdirectories
+    Debug.Print "Indexing files..."
     For Each file In folder.Files
         filePaths.Add file.Path
         fileNames.Add file.Name
@@ -90,14 +90,21 @@ Sub ReplaceObjects()
 
     ' 3. Iterate through all slides and objects
     Dim idx As Integer
+    Debug.Print "Iterating slides..."
+    Dim slide As PowerPoint.slide
     For Each slide In ActivePresentation.Slides
+        Debug.Print "Iterating shapes in slide " & slide.SlideNumber
+        Dim shape As PowerPoint.shape
         For Each shape In slide.Shapes
             If left(shape.Name, 2) = "#+" Then ' if the object is to be replaced
+                Debug.Print "Checking shape " & shape.Name
                 idx = IndexOf(fileNames, Mid(shape.Name, 3)) ' get the index of the file by name
                 If idx <> -1 Then ' if file is found
+                      Debug.Print "a matching file was found "
                     ' check if it's a picture or a text file
                     If Right(fileNames.Item(idx), 3) = "png" Or Right(fileNames.Item(idx), 3) = "jpg" Then
-                        If shape.Type = msoPicture Then ' if shape is a picture
+                        Debug.Print "11111 Its a PNG 11111"
+                        If shape.Type = msoPicture Or shape.Type = msoLinkedPicture Then ' if shape is a picture
                             ' keep old picture properties
                             Dim oldName As String: oldName = shape.Name
                             Dim oldLeft As Single: oldLeft = shape.left
@@ -106,10 +113,11 @@ Sub ReplaceObjects()
                             Dim oldHeight As Single: oldHeight = shape.height
                             shape.Delete
                             ' add new picture
-                            Dim newShape As shape
+                            Dim newShape As PowerPoint.shape
                             Set newShape = slide.Shapes.AddPicture(filePaths.Item(idx), _
                                     msoFalse, msoTrue, oldLeft, oldTop, oldWidth, oldHeight)
                             newShape.Name = oldName
+                            Debug.Print "----FILE WAS REPLACED ----- "
                         End If
                     ElseIf Right(fileNames.Item(idx), 3) = "txt" Then
                         If shape.Type = msoTextBox Then ' if shape is a text box
