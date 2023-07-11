@@ -342,7 +342,9 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
                     patch_y_list.append(patch_y_list[0])
 
                 if sm is not None:
-                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
+                    normalized_data = sm.norm(row[coloring_col])
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict, facecolor=cmap(normalized_data))
+
                 else:
                     polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict)
 
