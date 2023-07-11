@@ -288,7 +288,7 @@ def calculate_aspect_ratio(all_x_coords, all_y_coords):
     return (size, aspect_ratio) if aspect_ratio > 1 else (size / aspect_ratio, size)
 
 
-def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioning = [0.9, 0.4, 0.02, 0.38]):
+def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioning = [0.9, 0.4, 0.02, 0.38], tick_unit=""):
     divider = make_axes_locatable(ax)
     divider.append_axes("right", size="2%", pad=5.55)
 
@@ -300,7 +300,10 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioni
     min_tick = dataset[coloring_col].min()
     max_tick = dataset[coloring_col].max()
     colorbar.set_ticks([min_tick*1.05, max_tick*0.95])
-    colorbar.ax.set_yticklabels([str(round(min_tick,1)), str(round(max_tick,1))])
+    colorbar.ax.set_yticklabels([
+                                 str(round(min_tick,1))+" " +tick_unit, 
+                                 str(round(max_tick,1)) + " " +tick_unit
+                                 ])
     colorbar.ax.tick_params(labelsize=44)
     
 
@@ -342,13 +345,16 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
                     patch_y_list.append(patch_y_list[0])
 
                 if sm is not None:
-                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict, facecolor=cmap(sm.norm(row[coloring_col])))
+                    normalized_data = sm.norm(row[coloring_col])
+                    polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict, facecolor=cmap(normalized_data))
+
                 else:
                     polygon = patches.Polygon(np.column_stack((patch_x_list, patch_y_list)), **style_dict)
 
                 ax.add_patch(polygon)
             except Exception as e:
-               print(f"Error occurred: {e}")
+               pass
+               #print(f"Error occurred: {e}")
 
 
 def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.03):
@@ -368,7 +374,13 @@ def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.03):
 #dataset = dataset.dropna()
 
 # column used for heatmap and colorbar
-def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_col=None, cb_positioning = [0.9, 0.4, 0.02, 0.38], draw_oder_instruction=['-', '-', '+']):
+def createActivityNodePlot(dataset, 
+                           colorbar_title="", 
+                           color="coolwarm", 
+                           data_col=None, 
+                           cb_positioning = [0.9, 0.4, 0.02, 0.38], 
+                           draw_oder_instruction=['-', '-', '+'],
+                           tick_unit=""):
     
     if data_col == None:
         coloring_col = dataset.columns[0]
@@ -409,7 +421,7 @@ def createActivityNodePlot(dataset, colorbar_title="", color="coolwarm", data_co
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning, tick_unit=tick_unit)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], draw_oder_instruction)
 
     draw_polygons(ax, 
