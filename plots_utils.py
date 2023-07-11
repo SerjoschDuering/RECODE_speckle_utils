@@ -350,7 +350,8 @@ def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, dr
 
                 ax.add_patch(polygon)
             except Exception as e:
-               print(f"Error occurred: {e}")
+               pass
+               #print(f"Error occurred: {e}")
 
 
 def configure_plot(ax, all_x_coords, all_y_coords, buffer=0.03):
