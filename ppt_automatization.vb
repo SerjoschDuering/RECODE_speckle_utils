@@ -1,3 +1,10 @@
+
+#If VBA7 Then
+    Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr) 'For 64 Bit Systems
+#Else
+    Public Declare Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long) 'For 32 Bit Systems
+#End If
+
 Option Explicit
 
 Function IndexOf(col As Collection, val As Variant) As Integer
@@ -29,7 +36,7 @@ Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
     boldStartPos = InStr(txt, boldStart)
     boldEndPos = InStr(txt, boldEnd)
     While boldStartPos > 0 And boldEndPos > 0
-        With textRange.Characters(boldStartPos + Len(boldStart), boldEndPos - 1).Font
+        With textRange.Characters(boldStartPos + Len(boldStart), boldEndPos - 1).font
             .Bold = msoTrue
         End With
         txt = Replace(txt, boldStart, "", 1, 1)
@@ -42,7 +49,7 @@ Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
     italicStartPos = InStr(txt, italicStart)
     italicEndPos = InStr(txt, italicEnd)
     While italicStartPos > 0 And italicEndPos > 0
-        With textRange.Characters(italicStartPos + 1, italicEndPos - 2).Font
+        With textRange.Characters(italicStartPos + 1, italicEndPos - 2).font
             .Italic = msoTrue
         End With
         txt = Replace(txt, italicStart, "", 1, 1)
@@ -54,7 +61,6 @@ Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
     ' Assign the modified text to the text range
     textRange.Text = txt
 End Sub
-
 Sub ReplaceObjects()
 
     Dim fso As New FileSystemObject
@@ -63,6 +69,7 @@ Sub ReplaceObjects()
     Dim file As file
     Dim filePaths As New Collection
     Dim fileNames As New Collection
+    Dim shapeZOrder As New Scripting.Dictionary
 
     ' 1. Prompt for a directory
     With Application.FileDialog(msoFileDialogFolderPicker)
@@ -105,18 +112,62 @@ Sub ReplaceObjects()
                     If Right(fileNames.Item(idx), 3) = "png" Or Right(fileNames.Item(idx), 3) = "jpg" Then
                         Debug.Print "11111 Its a PNG 11111"
                         If shape.Type = msoPicture Or shape.Type = msoLinkedPicture Then ' if shape is a picture
+                            
+                            ' Before deleting the old shape, store its Z-Order
+                            If Not shapeZOrder.Exists(shape.Name) Then
+                                shapeZOrder.Add shape.Name, shape.ZOrderPosition
+                            End If
+                            
                             ' keep old picture properties
+                            Dim oldCropTop As Single: oldCropTop = shape.PictureFormat.CropTop
+                            Dim oldCropBottom As Single: oldCropBottom = shape.PictureFormat.CropBottom
+                            Dim oldCropLeft As Single: oldCropLeft = shape.PictureFormat.CropLeft
+                            Dim oldCropRight As Single: oldCropRight = shape.PictureFormat.CropRight
+                            
+                            ' remove cropping before deleting
+                            With shape.PictureFormat
+                                .CropTop = 0
+                                .CropBottom = 0
+                                .CropLeft = 0
+                                .CropRight = 0
+                            End With
+                            
+                            ' image size without cropping
                             Dim oldName As String: oldName = shape.Name
                             Dim oldLeft As Single: oldLeft = shape.left
                             Dim oldTop As Single: oldTop = shape.top
                             Dim oldWidth As Single: oldWidth = shape.width
                             Dim oldHeight As Single: oldHeight = shape.height
+                            
                             shape.Delete
+                            
                             ' add new picture
                             Dim newShape As PowerPoint.shape
                             Set newShape = slide.Shapes.AddPicture(filePaths.Item(idx), _
                                     msoFalse, msoTrue, oldLeft, oldTop, oldWidth, oldHeight)
+                            
+                            ' restore cropping
+                            With newShape.PictureFormat
+                                .CropTop = oldCropTop
+                                .CropBottom = oldCropBottom
+                                .CropLeft = oldCropLeft
+                                .CropRight = oldCropRight
+                            End With
+                            
+                            ' After adding the new shape, restore its Z-Order
+                            If shapeZOrder.Exists(newShape.Name) Then
+                                Do While newShape.ZOrderPosition < shapeZOrder(newShape.Name)
+                                    newShape.ZOrder msoBringForward
+                                Loop
+                                Do While newShape.ZOrderPosition > shapeZOrder(newShape.Name)
+                                    newShape.ZOrder msoSendBackward
+                                Loop
+                            End If
+                            
                             newShape.Name = oldName
+                            
+                            ' sleep for 50 milliseconds
+                            Sleep 50
                             Debug.Print "----FILE WAS REPLACED ----- "
                         End If
                     ElseIf Right(fileNames.Item(idx), 3) = "txt" Then
@@ -126,6 +177,9 @@ Sub ReplaceObjects()
                             Set textStream = fso.OpenTextFile(filePaths.Item(idx), ForReading)
                             ApplyTextStyle shape.TextFrame.textRange, textStream.ReadAll
                             textStream.Close
+                            
+                            ' sleep for 50 milliseconds
+                            Sleep 50
                         End If
                     End If
                 End If
@@ -133,5 +187,8 @@ Sub ReplaceObjects()
         Next shape
     Next slide
 End Sub
+
+
+
 
 
