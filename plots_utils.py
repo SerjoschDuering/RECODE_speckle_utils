@@ -300,7 +300,10 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioni
     min_tick = dataset[coloring_col].min()
     max_tick = dataset[coloring_col].max()
     colorbar.set_ticks([min_tick*1.05, max_tick*0.95])
-    colorbar.ax.set_yticklabels([str(round(min_tick,1))+" " +tick_unit, str(round(max_tick,1) + " " +tick_unit)])
+    colorbar.ax.set_yticklabels([
+                                 str(round(min_tick,1))+" " +tick_unit, 
+                                 str(round(max_tick,1)) + " " +tick_unit
+                                 ])
     colorbar.ax.tick_params(labelsize=44)
     
 
