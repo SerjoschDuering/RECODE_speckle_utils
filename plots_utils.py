@@ -421,7 +421,7 @@ def createActivityNodePlot(dataset,
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning, tick_unit=tick_unit)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], draw_oder_instruction)
 
     draw_polygons(ax, 
