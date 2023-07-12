@@ -169,3 +169,74 @@ def colab_zip_download_folder(dir_name):
         files.download(f"/content/{dir_name}.zip")
     except:
         print("something went wrong, this function will only work in google colab, make sure to import the necessary packages. >>> from google.colab import files <<<" ) 
+
+
+
+
+def generate__cluster_prompt(data_context, analysis_goal, column_descriptions, cluster_stat, exemplary_cluster_names_descriptions=None, creativity=None, complexity):
+    # Define complexity levels
+    complexity_levels = {
+        1: "Please explain the findings in a simple way, suitable for someone with no knowledge of statistics or data science.",
+        2: "Please explain the findings in moderate detail, suitable for someone with basic understanding of statistics or data science.",
+        3: "Please explain the findings in great detail, suitable for someone with advanced understanding of statistics or data science."
+    }
+
+    # Start the prompt
+    prompt = f"The data you are analyzing is from the following context: {data_context}. The goal of this analysis is: {analysis_goal}.\n\n"
+
+    # Add column descriptions
+    prompt += "The data consists of the following columns:\n"
+    for column, description in column_descriptions.items():
+        prompt += f"- {column}: {description}\n"
+
+    # Add cluster stat and ask for generation
+    prompt += "\nBased on the data, the following cluster has been identified:\n"
+    prompt += f"\nCluster ID: {cluster_stat['cluster_id']}\n"
+    for column, stats in cluster_stat['columns'].items():
+        prompt += f"- {column}:\n"
+        for stat, value in stats.items():
+            prompt += f"  - {stat}: {value}\n"
+    
+    # Adjust the prompt based on whether examples are provided
+    if exemplary_cluster_names_descriptions is not None and creativity is not None:
+        prompt += f"\nPlease generate a name and description for this cluster, using a creativity level of {creativity} (where 0 is sticking closely to the examples and 1 is completely original). The examples provided are: {exemplary_cluster_names_descriptions}\n"
+    else:
+        prompt += "\nPlease generate a name and description for this cluster. Be creative and original in your descriptions.\n"
+
+    prompt += "Please fill the following JSON template with the cluster name and two types of descriptions:\n"
+    prompt += "{\n  \"cluster_name\": \"<generate>\",\n  \"description_narrative\": \"<generate>\",\n  \"description_statistical\": \"<generate>\"\n}\n"
+    prompt += f"\nFor the narrative description, {complexity_levels[complexity]}"
+
+    return prompt
+
+
+
+
+def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean', 'min', 'max', 'std', 'kurt']):
+    cluster_description = {"cluster_id": "<generate>", "columns": {}}
+
+    for column in cluster_df.columns:
+        cluster_description["columns"][column] = {}
+
+        for stat in stats_list:
+            # Compute the statistic for the cluster
+            if stat == 'mean':
+                value = cluster_df[column].mean()
+            elif stat == 'min':
+                value = cluster_df[column].min()
+            elif stat == 'max':
+                value = cluster_df[column].max()
+            elif stat == 'std':
+                value = cluster_df[column].std()
+            elif stat == 'kurt':
+                value = cluster_df[column].kurt()
+
+            # Compute the relative difference if the original dataframe is provided
+            if original_df is not None:
+                original_value = original_df[column].mean() if stat == 'mean' else original_df[column].min() if stat == 'min' else original_df[column].max() if stat == 'max' else original_df[column].std() if stat == 'std' else original_df[column].kurt()
+                relative_difference = (value - original_value) / original_value * 100
+                cluster_description["columns"][column][stat] = {"value": value, "relative_difference": f"{relative_difference}%"}
+            else:
+                cluster_description["columns"][column][stat] = {"value": value}
+
+    return cluster_description
