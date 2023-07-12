@@ -173,7 +173,7 @@ def colab_zip_download_folder(dir_name):
 
 
 
-def generate__cluster_prompt(data_context, analysis_goal, column_descriptions, cluster_stat, exemplary_cluster_names_descriptions=None, creativity=None, complexity):
+def generate__cluster_prompt(data_context, analysis_goal, column_descriptions, cluster_stat, complexity, exemplary_cluster_names_descriptions=None, creativity=None):
     # Define complexity levels
     complexity_levels = {
         1: "Please explain the findings in a simple way, suitable for someone with no knowledge of statistics or data science.",
