@@ -556,7 +556,8 @@ def radar(df_scaled,
           factor=100, 
           ax_multi = None, 
           fig_multi=None, 
-          label_font_size =6):
+          label_font_size =6,
+          num_datapoints=None):
     
     """
     This function creates a radar chart (also known as a spider or star chart) from given data.
@@ -658,6 +659,13 @@ def radar(df_scaled,
     # Lastly, give the chart a title and give it some
     # padding above the "Acceleration" label.
     ax.set_title(cluster_name, y=1.11)
+
+     # Add this at the end of your function
+    if num_datapoints is not None:
+        # plt.figtext adds text to the figure as a whole, outside individual subplots
+        # The parameters are (x, y, text), where x and y are in figure coordinates
+        plt.figtext(0.5, -0.05, f'datapoints: {num_datapoints}', ha='center')
+
     return fig, ax
 
 
