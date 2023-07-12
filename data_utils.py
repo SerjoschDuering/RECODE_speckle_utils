@@ -210,26 +210,30 @@ def generate__cluster_prompt(data_context, analysis_goal, column_descriptions, c
     return prompt
 
 
-
-
 def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean', 'min', 'max', 'std', 'kurt']):
-    cluster_description = {"cluster_id": "<generate>", "columns": {}}
-
+    cluster_description = {"cluster_id": "<generate>",
+                            "name":"<generate>",
+                              "description_narrative":"<generate>",
+                              "description_statistical":"<generate>",
+                              "size": len(cluster_df),
+                                "columns": {}
+                                }
+    if original_df is not None:
+        size_relative = round(len(cluster_df)/len(original_df), 2)
     for column in cluster_df.columns:
         cluster_description["columns"][column] = {}
-
         for stat in stats_list:
             # Compute the statistic for the cluster
             if stat == 'mean':
-                value = cluster_df[column].mean()
+                value = round(cluster_df[column].mean(),2)
             elif stat == 'min':
-                value = cluster_df[column].min()
+                value = round(cluster_df[column].min(),2)
             elif stat == 'max':
-                value = cluster_df[column].max()
+                value = round(cluster_df[column].max(),2)
             elif stat == 'std':
-                value = cluster_df[column].std()
+                value = round(cluster_df[column].std(), 2)
             elif stat == 'kurt':
-                value = cluster_df[column].kurt()
+                value = round(cluster_df[column].kurt(), 2)
 
             # Compute the relative difference if the original dataframe is provided
             if original_df is not None:
