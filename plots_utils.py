@@ -17,6 +17,27 @@ from pandas.api.types import is_numeric_dtype
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def cleanData(data, mode="drop", num_only=False):
+    """
+    This function cleans the input data based on the specified mode.
+
+    Parameters:
+    data (pd.DataFrame, pd.Series, or np.ndarray): The input data to be cleaned.
+    mode (str, optional): The cleaning method, one of "drop", "replace_zero", or "replace_mean". 
+                          "drop" removes NaN values, 
+                          "replace_zero" replaces NaN values with zeros,
+                          "replace_mean" replaces NaN values with the mean of the data.
+                          Defaults to "drop".
+    num_only (bool, optional): If True and data is a DataFrame, only integer and float columns are kept.
+                               Defaults to False.
+
+    Returns:
+    data (same type as input): The cleaned data.
+
+    The function works with pandas DataFrame, Series, and numpy array. Depending on the 'mode' argument, 
+    it either drops the NaN values, replaces them with zero, or replaces them with the mean of the data. 
+    If the data is a DataFrame and num_only is set to True, the function only keeps the columns with 
+    numeric data (int64 and float64 dtypes).
+    """
     # check the type of input data
     if isinstance(data, pd.DataFrame):
         if num_only:
@@ -56,6 +77,22 @@ def cleanData(data, mode="drop", num_only=False):
     return data
 
 def boxPlot(inp_data, columName, cull_invalid=True):
+  """
+    This function generates a boxplot for a given set of data.
+
+    Parameters:
+    inp_data (array or list): Input data for which the boxplot is to be created.
+    columName (str): The name of the column which the data represents, to be used as title for the boxplot.
+    cull_invalid (bool, optional): If True, invalid entries in the data are dropped. Defaults to True.
+    
+    Returns:
+    fig (matplotlib Figure object): Figure containing the boxplot.
+    ax (matplotlib Axes object): Axes of the created boxplot.
+
+    The function creates a boxplot of the provided data, marking the 25th, 50th, and 75th percentiles. 
+    The style of the boxplot is custom, with specific colors and properties for different boxplot elements. 
+    The figure title is set to the provided column name.
+    """
   if cull_invalid == True:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
 
@@ -121,6 +158,23 @@ def boxPlot(inp_data, columName, cull_invalid=True):
 
 
 def boxPlot_colorbar(inp_data, columName, cull_invalid=True, color =  ['blue', 'red']):
+  """
+    This function creates a boxplot with an integrated colorbar for a given set of data. 
+
+    Parameters:
+    inp_data (array or list): Input data for which the boxplot is to be created.
+    columName (str): The name of the column which the data represents, to be used as title for the boxplot.
+    cull_invalid (bool, optional): If True, invalid entries in the data are dropped. Defaults to True.
+    color (list of str, optional): List of colors to use for the gradient colorbar. Defaults to ['blue', 'red'].
+    
+    Returns:
+    fig (matplotlib Figure object): Figure containing the boxplot.
+    ax (matplotlib Axes object): Axes of the created boxplot.
+
+    The function creates a boxplot of the provided data, marking the 25th, 50th, and 75th percentiles. 
+    It also creates a horizontal colorbar above the boxplot that serves as a gradient from the minimum 
+    to the maximum values of the data, emphasizing the data distribution.
+    """
   if cull_invalid == True:
     inp_data = cleanData(inp_data, mode="drop", num_only=True)
 
@@ -320,7 +374,28 @@ def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioni
 
 
 def draw_polygons(ax, dataset, x_cord_name, y_cord_name, style_dict, sm=None, drawing_order=None, cmap=None, coloring_col=None):
-    
+    """
+    This function draws polygons on a given axes object based on coordinates defined in the dataset.
+
+    Parameters:
+    ax (matplotlib.axes.Axes): The axes object on which to draw the polygons.
+    dataset (pd.DataFrame): The input DataFrame containing the coordinates of the polygons.
+    x_cord_name (str): The name of the column in the dataset that contains the x-coordinates.
+    y_cord_name (str): The name of the column in the dataset that contains the y-coordinates.
+    style_dict (dict): A dictionary defining the style parameters for the polygons.
+    sm (matplotlib.cm.ScalarMappable, optional): The scalar mappable object used for mapping normalized data to RGBA.
+    drawing_order (list, optional): A list of indices defining the order in which to draw the polygons.
+    cmap (matplotlib.colors.Colormap, optional): The colormap to use for coloring the polygons.
+    coloring_col (str, optional): The name of the column in the dataset that contains the coloring values for the polygons.
+
+    Returns:
+    None
+
+    The function reads the x and y coordinates from the dataset and creates a polygon for each row. 
+    If a scalar mappable and a colormap are provided, the polygons are colored accordingly. 
+    The order in which the polygons are drawn can be specified with the drawing_order parameter. 
+    If no order is specified, the polygons are drawn in the order they appear in the dataset.
+    """
     if drawing_order is None:
         drawing_order = dataset.index
     for idx in drawing_order:
@@ -381,6 +456,28 @@ def createActivityNodePlot(dataset,
                            cb_positioning = [0.9, 0.4, 0.02, 0.38], 
                            draw_oder_instruction=['-', '-', '+'],
                            tick_unit=""):
+    
+    """
+    This function creates an activity node plot using the provided dataset, and optionally includes a colorbar. 
+
+    Parameters:
+    dataset (pd.DataFrame): The input DataFrame containing the data.
+    colorbar_title (str, optional): The title for the colorbar. Default is an empty string.
+    color (str or list, optional): The colormap for the plot. Can be a matplotlib colormap name or a list of colors. Default is "coolwarm".
+    data_col (str, optional): The name of the column in the dataset to use for coloring the nodes. If not provided, the first column of the dataset is used.
+    cb_positioning (list, optional): A list of four floats defining the position and size of the colorbar. Defaults to [0.9, 0.4, 0.02, 0.38].
+    draw_oder_instruction (list, optional): A list of strings defining the order in which to draw the polygons. Defaults to ['-', '-', '+'].
+    tick_unit (str, optional): The unit for the ticks on the colorbar. Default is an empty string.
+
+    Returns:
+    fig (matplotlib.figure.Figure): The created figure object.
+    ax (matplotlib.axes._subplots.AxesSubplot): The created Axes object.
+
+    The function creates an activity node plot with optional coloring based on a data column. 
+    The plot includes polygons representing nodes, and optionally a colorbar. 
+    The order in which the nodes are drawn can be specified. 
+    The plot's aspect ratio is calculated based on the provided coordinates.
+    """
     
     if data_col == None:
         coloring_col = dataset.columns[0]
@@ -449,6 +546,119 @@ def createActivityNodePlot(dataset,
     configure_plot(ax, all_x_coords, all_y_coords)
     return fig, ax
 
+
+
+    
+def radar(df_scaled, 
+          color, 
+          cluster_name, 
+          col_name_overide=None, 
+          factor=100, 
+          ax_multi = None, 
+          fig_multi=None, 
+          label_font_size =6):
+    
+    """
+    This function creates a radar chart (also known as a spider or star chart) from given data.
+
+    Parameters:
+    df_scaled (DataFrame): Scaled DataFrame, where each column represents an axis on the radar chart.
+    color (str): Color of the fill and outline on the radar chart.
+    cluster_name (str): Title for the radar chart.
+    col_name_overide (list of str, optional): Column names to use for the radar chart axis labels. If None, the column names of the DataFrame are used. 
+    factor (int, optional): Scaling factor for the data, defaults to 100.
+    ax_multi (matplotlib Axes object, optional): Predefined matplotlib Axes. If None, a new Axes object is created.
+    fig_multi (matplotlib Figure object, optional): Predefined matplotlib Figure for the plot. If None, a new Figure is created.
+    label_font_size (int, optional): Font size for the axis labels, defaults to 6.
+    
+    Returns:
+    fig (matplotlib Figure object): Figure containing the radar chart.
+    ax (matplotlib Axes object): Axes of the created radar chart.
+
+    The function plots each column of df_scaled as an axis on the radar chart, where the mean values are filled in. 
+    The chart is scaled using the provided factor. The aesthetics of the plot such as color and font size are customizable.
+    """
+
+    # Each attribute we'll plot in the radar chart.
+    if col_name_overide == None:
+      labels = df_scaled.columns.tolist()
+    else:
+      labels=col_name_overide
+
+    # ax = plt.subplot(polar=True)
+    if ax_multi == None or fig_multi == None:
+      fig, ax = plt.subplots(figsize=(3.5, 3.5), subplot_kw=dict(polar=True), dpi=200)
+    else:
+      fig = fig_multi
+      ax = ax_multi
+
+    df_scaled = df_scaled * factor
+    values = df_scaled.mean().tolist()
+    values_min = df_scaled.min().tolist()
+    values_max = df_scaled.max().tolist()
+
+    # Number of variables we're plotting.
+    num_vars = len(labels)
+
+    # Split the circle into even parts and save the angles
+    # so we know where to put each axis.
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+
+    # The plot is a circle, so we need to "complete the loop"
+    # and append the start value to the end.
+    values += values[:1]
+    values_min += values_min[:1]
+    values_max += values_max[:1]
+    angles += angles[:1]
+
+    # Draw the outline of our data.
+    ax.plot(angles, values, color=color, linewidth=2)
+
+    # Fill it in.
+    ax.fill(angles, values, color=color, alpha=0.25)
+
+    # Fix axis to go in the right order and start at 12 o'clock.
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # Draw axis lines for each angle and label.
+    labels += labels[:1]
+    ax.set_thetagrids(np.degrees(angles), labels)
+   
+    # Go through labels and adjust alignment based on where
+    # it is in the circle.
+    for label, angle in zip(ax.get_xticklabels(), angles):
+        if angle in (0, np.pi):
+            label.set_horizontalalignment('center')
+        elif 0 < angle < np.pi:
+            label.set_horizontalalignment('left')
+        else:
+            label.set_horizontalalignment('right')
+        label.set_fontsize(label_font_size)
+
+    # Ensure radar goes from 0 to 100.
+    ax.set_ylim(0, 100)
+
+    # of the first two axes.
+    ax.set_rlabel_position(180 / num_vars)
+
+    # Add some custom styling.
+    # Change the color of the tick labels.
+    ax.tick_params(colors='#222222')
+
+    # Make the y-axis (0-100) labels smaller.
+    ax.tick_params(axis='y', labelsize=6)
+    # Change the color of the circular gridlines.
+    ax.grid(color='#AAAAAA')
+    # Change the color of the outermost gridline (the spine).
+    ax.spines['polar'].set_color('#222222')
+    # Change the background color inside the circle itself.
+    ax.set_facecolor('#FAFAFA')
+
+    # Lastly, give the chart a title and give it some
+    # padding above the "Acceleration" label.
+    ax.set_title(cluster_name, y=1.11)
+    return fig, ax
 
 
 def gh_color_blueRed():
