@@ -210,8 +210,8 @@ def generate__cluster_prompt(data_context, analysis_goal, column_descriptions, c
     return prompt
 
 
-def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean', 'min', 'max', 'std', 'kurt']):
-    cluster_description = {"cluster_id": "<generate>",
+def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean', 'min', 'max', 'std', 'kurt'], cluster_id = ""):
+    cluster_description = {"cluster_id": cluster_id,
                             "name":"<generate>",
                               "description_narrative":"<generate>",
                               "description_statistical":"<generate>",
@@ -239,8 +239,8 @@ def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean
             if original_df is not None:
                 original_value = original_df[column].mean() if stat == 'mean' else original_df[column].min() if stat == 'min' else original_df[column].max() if stat == 'max' else original_df[column].std() if stat == 'std' else original_df[column].kurt()
                 relative_difference = (value - original_value) / original_value * 100
-                cluster_description["columns"][column][stat] = {"value": value, "relative_difference": f"{relative_difference}%"}
+                cluster_description["columns"][column][stat] = {"value": round(value,2), "relative_difference": f"{round(relative_difference,2)}%"}
             else:
-                cluster_description["columns"][column][stat] = {"value": value}
+                cluster_description["columns"][column][stat] = {"value": round(value,2)}
 
     return cluster_description
