@@ -1,0 +1,458 @@
+[{
+  'cluster_id': 0,
+  'name': 'Professionals with High Mobility',
+  'description_narrative':"Professionals with High Mobility: This group could be composed of young to middle-aged professionals who prioritize access to jobs (17.065803) and hospitality (7.5), perhaps due to their active participation in the workforce and frequent networking activities. Although the accessibility of amenities like culture (2.387354) and retail (6.574742) is lower for them, their high mobility might compensate for these limitations.",
+  'size': 59,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.75,
+        'relative_difference': '3.47%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-69.24%' }
+    },
+    'livability_jobs': {
+      'mean': {
+        'value': 0.97,
+        'relative_difference': '22.03%'
+      },
+      'std': { 'value': 0.07, 'relative_difference': '-71.86%' }
+    },
+    'livability_food': {
+      'mean': { 'value': 0.85, 'relative_difference': '3.01%' },
+      'std': { 'value': 0.09, 'relative_difference': '-62.28%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.88,
+        'relative_difference': '5.54%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-66.58%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.82,
+        'relative_difference': '37.8%'
+      },
+      'std': { 'value': 0.15, 'relative_difference': '-52.14%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.97,
+        'relative_difference': '42.77%'
+      },
+      'std': { 'value': 0.07, 'relative_difference': '-77.07%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.7,
+        'relative_difference': '23.64%'
+      },
+      'std': { 'value': 0.18, 'relative_difference': '-47.39%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.91,
+        'relative_difference': '15.14%'
+      },
+      'std': { 'value': 0.11, 'relative_difference': '-55.46%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.87,
+        'relative_difference': '8.45%'
+      },
+      'std': { 'value': 0.11, 'relative_difference': '-54.87%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.55,
+        'relative_difference': '-19.37%'
+      },
+      'std': { 'value': 0.1, 'relative_difference': '-63.91%' }
+    }
+  }
+},
+{
+  'cluster_id': 1,
+  'name': 'Seniors',
+  'description_narrative': "Seniors: The second group is characterized by strong accessibility to health facilities (7.911493) and public amenities (7.5), suggesting that it could represent senior citizens. Given the lower accessibility to jobs (16.201692) and sports facilities (2.171422), this group could be primarily retirees, who are more concerned with healthcare and community events.",
+  'description_statistical': '<generate>',
+  'size': 111,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.45,
+        'relative_difference': '-37.92%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-69.24%' }
+    },
+    'livability_jobs': {
+      'mean': {
+        'value': 0.76,
+        'relative_difference': '-4.39%'
+      },
+      'std': { 'value': 0.16, 'relative_difference': '-35.67%' }
+    },
+    'livability_food': {
+      'mean': {
+        'value': 0.71,
+        'relative_difference': '-13.96%'
+      },
+      'std': { 'value': 0.16, 'relative_difference': '-32.94%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.77,
+        'relative_difference': '-7.66%'
+      },
+      'std': { 'value': 0.18, 'relative_difference': '-24.8%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.24,
+        'relative_difference': '-59.67%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-74.47%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.78,
+        'relative_difference': '14.81%'
+      },
+      'std': { 'value': 0.19, 'relative_difference': '-37.77%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.18,
+        'relative_difference': '-68.21%'
+      },
+      'std': { 'value': 0.09, 'relative_difference': '-73.7%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.61,
+        'relative_difference': '-22.82%'
+      },
+      'std': { 'value': 0.14, 'relative_difference': '-43.31%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.6,
+        'relative_difference': '-25.21%'
+      },
+      'std': { 'value': 0.1, 'relative_difference': '-58.97%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.44,
+        'relative_difference': '-35.5%'
+      },
+      'std': { 'value': 0.13, 'relative_difference': '-53.08%' }
+    }
+  }
+},
+{
+  'cluster_id': 2,
+  'name': 'Educated Youth',
+  'description_narrative': 'Educated Youth: The third group might represent younger, educated individuals who prioritize public amenities (8.126454), jobs (15.880479), and sports (7.5). They have lesser access to education facilities (2.17331), suggesting that they may have recently graduated and are now transitioning into the workforce.',
+  'description_statistical': '<generate>',
+  'size': 149,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.98,
+        'relative_difference': '35.2%'
+      },
+      'std': { 'value': 0.05, 'relative_difference': '-80.77%' }
+    },
+    'livability_jobs': {
+      'mean': { 'value': 0.83, 'relative_difference': '4.42%' },
+      'std': { 'value': 0.09, 'relative_difference': '-63.82%' }
+    },
+    'livability_food': {
+      'mean': {
+        'value': 0.95,
+        'relative_difference': '15.12%'
+      },
+      'std': { 'value': 0.07, 'relative_difference': '-70.66%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.93,
+        'relative_difference': '11.53%'
+      },
+      'std': { 'value': 0.07, 'relative_difference': '-70.75%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.89,
+        'relative_difference': '49.57%'
+      },
+      'std': { 'value': 0.13, 'relative_difference': '-58.52%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.49,
+        'relative_difference': '-27.88%'
+      },
+      'std': { 'value': 0.1, 'relative_difference': '-67.25%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.97,
+        'relative_difference': '71.33%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-76.62%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.92,
+        'relative_difference': '16.4%'
+      },
+      'std': { 'value': 0.09, 'relative_difference': '-63.56%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.95,
+        'relative_difference': '18.42%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-67.18%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.9,
+        'relative_difference': '31.93%'
+      },
+      'std': { 'value': 0.14, 'relative_difference': '-49.47%' }
+    }
+  }
+},
+{
+  'cluster_id': 3,
+  'name': 'Blue-collar Workers:',
+  'description_narrative': 'Blue-collar Workers: The last group shows the highest accessibility to jobs (9.904288) and public facilities (5.869885), but less access to healthcare (5.615875) and cultural amenities (1.524582). This profile might represent blue-collar workers who value job opportunities and public amenities more than cultural or healthcare facilities.',
+  'description_statistical': '<generate>',
+  'size': 170,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.72,
+        'relative_difference': '-0.67%'
+      },
+      'std': { 'value': 0.14, 'relative_difference': '-46.16%' }
+    },
+    'livability_jobs': {
+      'mean': {
+        'value': 0.96,
+        'relative_difference': '20.77%'
+      },
+      'std': { 'value': 0.06, 'relative_difference': '-75.88%' }
+    },
+    'livability_food': {
+      'mean': { 'value': 0.87, 'relative_difference': '5.43%' },
+      'std': { 'value': 0.08, 'relative_difference': '-66.47%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.91,
+        'relative_difference': '9.13%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-66.58%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.42,
+        'relative_difference': '-29.42%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-74.47%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.96,
+        'relative_difference': '41.3%'
+      },
+      'std': { 'value': 0.06, 'relative_difference': '-80.35%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.29,
+        'relative_difference': '-48.78%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-76.62%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.89,
+        'relative_difference': '12.61%'
+      },
+      'std': { 'value': 0.09, 'relative_difference': '-63.56%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.82,
+        'relative_difference': '2.22%'
+      },
+      'std': { 'value': 0.06, 'relative_difference': '-75.38%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.61,
+        'relative_difference': '-10.58%'
+      },
+      'std': { 'value': 0.15, 'relative_difference': '-45.86%' }
+    }
+  }
+},
+{
+  'cluster_id': 4,
+  'name': 'Suburban Residents',
+  'description_narrative': 'Suburban Residents: The fourth group seems to have lesser access to most amenities, which might indicate suburban residents or individuals living on the peripheries of "The Line". They have access to public amenities (7.929245) and culture (5.922959) but limited access to jobs (5.621199) and education (1.388258).',
+  'description_statistical': '<generate>',
+  'size': 145,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.77,
+        'relative_difference': '6.23%'
+      },
+      'std': { 'value': 0.1, 'relative_difference': '-61.54%' }
+    },
+    'livability_jobs': {
+      'mean': {
+        'value': 0.94,
+        'relative_difference': '18.26%'
+      },
+      'std': { 'value': 0.07, 'relative_difference': '-71.86%' }
+    },
+    'livability_food': {
+      'mean': { 'value': 0.93, 'relative_difference': '12.7%' },
+      'std': { 'value': 0.07, 'relative_difference': '-70.66%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.93,
+        'relative_difference': '11.53%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-66.58%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.92,
+        'relative_difference': '54.61%'
+      },
+      'std': { 'value': 0.13, 'relative_difference': '-58.52%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.85,
+        'relative_difference': '25.11%'
+      },
+      'std': { 'value': 0.11, 'relative_difference': '-63.97%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.86,
+        'relative_difference': '51.9%'
+      },
+      'std': { 'value': 0.17, 'relative_difference': '-50.32%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.92,
+        'relative_difference': '16.4%'
+      },
+      'std': { 'value': 0.09, 'relative_difference': '-63.56%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.92,
+        'relative_difference': '14.68%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-67.18%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.93,
+        'relative_difference': '36.33%'
+      },
+      'std': { 'value': 0.1, 'relative_difference': '-63.91%' }
+    }
+  }
+},
+{
+  'cluster_id': 5,
+  'name': '<generate>',
+  'description_narrative': '<generate>',
+  'description_statistical': '<generate>',
+  'size': 120,
+  'columns': {
+    'livability_sport': {
+      'mean': {
+        'value': 0.87,
+        'relative_difference': '20.02%'
+      },
+      'std': { 'value': 0.14, 'relative_difference': '-46.16%' }
+    },
+    'livability_jobs': {
+      'mean': {
+        'value': 0.6,
+        'relative_difference': '-24.52%'
+      },
+      'std': { 'value': 0.08, 'relative_difference': '-67.84%' }
+    },
+    'livability_food': {
+      'mean': { 'value': 0.88, 'relative_difference': '6.64%' },
+      'std': { 'value': 0.13, 'relative_difference': '-45.51%' }
+    },
+    'livability_residential': {
+      'mean': {
+        'value': 0.84,
+        'relative_difference': '0.74%'
+      },
+      'std': { 'value': 0.15, 'relative_difference': '-37.33%' }
+    },
+    'livability_hospitality': {
+      'mean': {
+        'value': 0.52,
+        'relative_difference': '-12.61%'
+      },
+      'std': { 'value': 0.13, 'relative_difference': '-58.52%' }
+    },
+    'livability_education': {
+      'mean': {
+        'value': 0.33,
+        'relative_difference': '-51.43%'
+      },
+      'std': { 'value': 0.09, 'relative_difference': '-70.52%' }
+    },
+    'livability_culture': {
+      'mean': {
+        'value': 0.62,
+        'relative_difference': '9.51%'
+      },
+      'std': { 'value': 0.15, 'relative_difference': '-56.16%' }
+    },
+    'livability_retail': {
+      'mean': {
+        'value': 0.74,
+        'relative_difference': '-6.37%'
+      },
+      'std': { 'value': 0.14, 'relative_difference': '-43.31%' }
+    },
+    'livability_public_spaces': {
+      'mean': {
+        'value': 0.91,
+        'relative_difference': '13.43%'
+      },
+      'std': { 'value': 0.12, 'relative_difference': '-50.76%' }
+    },
+    'livability_health': {
+      'mean': {
+        'value': 0.76,
+        'relative_difference': '11.41%'
+      },
+      'std': { 'value': 0.19, 'relative_difference': '-31.43%' }
+    }
+  }
+}]

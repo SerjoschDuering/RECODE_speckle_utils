@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import copy
 import os 
-
+import csv
+import io
+import json
 def helper():
     """
     Prints out the help message for this module.
@@ -244,3 +246,71 @@ def generate_cluster_description(cluster_df, original_df=None, stats_list=['mean
                 cluster_description["columns"][column][stat] = {"value": round(value,2)}
 
     return cluster_description
+
+
+
+
+def generate_cluster_description_mixed(cluster_df, original_df=None, stats_list=['mean', 'min', 'max', 'std', 'kurt'], cluster_id = ""):
+    cluster_description = {
+        "cluster_id": cluster_id,
+        "name":"<generate>",
+        "description_narrative":"<generate>",
+        "description_statistical":"<generate>",
+        "size": len(cluster_df),
+        "columns": {}
+    }
+
+    if original_df is not None:
+        size_relative = round(len(cluster_df)/len(original_df), 2)
+
+    # Create CSV string in memory
+    csv_io = io.StringIO()
+    writer = csv.writer(csv_io)
+
+    # CSV Headers
+    writer.writerow(['Column', 'Stat', 'Value', 'Relative_Difference'])
+
+    for column in cluster_df.columns:
+        for stat in stats_list:
+            if stat == 'mean':
+                value = round(cluster_df[column].mean(),2)
+            elif stat == 'min':
+                value = round(cluster_df[column].min(),2)
+            elif stat == 'max':
+                value = round(cluster_df[column].max(),2)
+            elif stat == 'std':
+                value = round(cluster_df[column].std(), 2)
+            elif stat == 'kurt':
+                value = round(cluster_df[column].kurt(), 2)
+
+            if original_df is not None:
+                original_value = original_df[column].mean() if stat == 'mean' else original_df[column].min() if stat == 'min' else original_df[column].max() if stat == 'max' else original_df[column].std() if stat == 'std' else original_df[column].kurt()
+                relative_difference = (value - original_value) / original_value * 100
+                writer.writerow([column, stat, value, f"{round(relative_difference,2)}%"])
+            else:
+                writer.writerow([column, stat, value, "N/A"])
+
+    # Store CSV data in JSON
+    cluster_description["columns"] = csv_io.getvalue()
+
+    data_description = """
+        The input data is a JSON object with details about clusters. It has the following structure:
+
+        1. 'cluster_id': An identifier for the cluster.
+        2. 'name': A placeholder for the name of the cluster.
+        3. 'description_narrative': A placeholder for a narrative description of the cluster.
+        4. 'description_statistical': A placeholder for a statistical description of the cluster.
+        5. 'size': The number of elements in the cluster.
+        6. 'columns': This contains statistical data about different aspects, presented in CSV format. 
+
+        In the 'columns' CSV:
+        - 'Column' corresponds to the aspect.
+        - 'Stat' corresponds to the computed statistic for that aspect in the cluster.
+        - 'Value' is the value of that statistic.
+        - 'Relative_Difference' is the difference of the statistic's value compared to the average value of this statistic in the entire dataset, expressed in percentages.
+        """
+
+    return cluster_description, data_description
+
+
+
