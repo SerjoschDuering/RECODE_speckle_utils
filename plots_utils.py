@@ -549,42 +549,40 @@ def createActivityNodePlot(dataset,
 
 
     
-def radar(df_scaled, 
+def radar(values_norm,
+          labels, 
           color, 
           cluster_name, 
-          col_name_overide=None, 
           factor=100, 
           ax_multi = None, 
           fig_multi=None, 
           label_font_size =6,
           num_datapoints=None):
-    
+        
     """
-    This function creates a radar chart (also known as a spider or star chart) from given data.
+    This function creates a radar chart (also known as a spider or star chart) from given normalized values and labels.
 
     Parameters:
-    df_scaled (DataFrame): Scaled DataFrame, where each column represents an axis on the radar chart.
+    values_norm (list of numbers): Normalized values to plot on the radar chart, these values will be scaled within the function.
+    labels (list of str): Labels for the axes of the radar chart.
     color (str): Color of the fill and outline on the radar chart.
     cluster_name (str): Title for the radar chart.
-    col_name_overide (list of str, optional): Column names to use for the radar chart axis labels. If None, the column names of the DataFrame are used. 
     factor (int, optional): Scaling factor for the data, defaults to 100.
     ax_multi (matplotlib Axes object, optional): Predefined matplotlib Axes. If None, a new Axes object is created.
     fig_multi (matplotlib Figure object, optional): Predefined matplotlib Figure for the plot. If None, a new Figure is created.
     label_font_size (int, optional): Font size for the axis labels, defaults to 6.
-    
+    num_datapoints (int, optional): Number of datapoints used to calculate the values, will be displayed in the plot if provided.
+
     Returns:
     fig (matplotlib Figure object): Figure containing the radar chart.
     ax (matplotlib Axes object): Axes of the created radar chart.
 
-    The function plots each column of df_scaled as an axis on the radar chart, where the mean values are filled in. 
-    The chart is scaled using the provided factor. The aesthetics of the plot such as color and font size are customizable.
+    This function plots each value from 'values_norm' as an axis on the radar chart, 
+    the aesthetics of the plot such as color and font size are customizable. The chart 
+    is scaled using the provided factor. 'values_norm' should be preprocessed outside 
+    of this function: they should be the mean values of your original data, normalized 
+    to be between 0 and 1.
     """
-
-    # Each attribute we'll plot in the radar chart.
-    if col_name_overide == None:
-      labels = df_scaled.columns.tolist()
-    else:
-      labels=col_name_overide
 
     # ax = plt.subplot(polar=True)
     if ax_multi == None or fig_multi == None:
@@ -593,10 +591,7 @@ def radar(df_scaled,
       fig = fig_multi
       ax = ax_multi
 
-    df_scaled = df_scaled * factor
-    values = df_scaled.mean().tolist()
-    values_min = df_scaled.min().tolist()
-    values_max = df_scaled.max().tolist()
+    values_norm = [v*factor for v in values_norm]
 
     # Number of variables we're plotting.
     num_vars = len(labels)
@@ -607,16 +602,14 @@ def radar(df_scaled,
 
     # The plot is a circle, so we need to "complete the loop"
     # and append the start value to the end.
-    values += values[:1]
-    values_min += values_min[:1]
-    values_max += values_max[:1]
+    values_norm += values_norm[:1]
     angles += angles[:1]
 
     # Draw the outline of our data.
-    ax.plot(angles, values, color=color, linewidth=2)
+    ax.plot(angles, values_norm, color=color, linewidth=2)
 
     # Fill it in.
-    ax.fill(angles, values, color=color, alpha=0.25)
+    ax.fill(angles, values_norm, color=color, alpha=0.25)
 
     # Fix axis to go in the right order and start at 12 o'clock.
     ax.set_theta_offset(np.pi / 2)
