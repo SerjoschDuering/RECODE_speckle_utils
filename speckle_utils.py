@@ -78,8 +78,12 @@ def getSpeckleStream(stream_id,
     print("updated A")
 
     # set stream and branch
-    branch = client.branch.get(stream_id, branch_name, 3)
-    print(branch)
+    try:
+        branch = client.branch.get(stream_id, branch_name, 3)
+        print(branch)
+    except:
+        branch = client.branch.get(stream_id, branch_name, 1)
+        print(branch)
 
     print("last three commits:")
     [print(ite.createdAt) for ite in branch.commits.items]
