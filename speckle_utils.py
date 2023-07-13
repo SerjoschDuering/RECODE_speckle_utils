@@ -89,6 +89,7 @@ def getSpeckleStream(stream_id,
     [print(ite.createdAt) for ite in branch.commits.items]
 
     if commit_id == "":
+        print("oke",branch.commits.items)
         latest_commit = branch.commits.items[0]
         choosen_commit_id = latest_commit.id
         print("afasfgagagag!", choosen_commit_id)
