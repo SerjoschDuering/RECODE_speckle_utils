@@ -1,4 +1,3 @@
-
 #If VBA7 Then
     Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr) 'For 64 Bit Systems
 #Else
@@ -7,7 +6,8 @@
 
 Option Explicit
 
-Function IndexOf(col As Collection, val As Variant) As Integer
+
+Function IndexOf(col As collection, val As Variant) As Integer
     Dim i As Integer
     For i = 1 To col.Count
         If col(i) = val Then
@@ -18,57 +18,127 @@ Function IndexOf(col As Collection, val As Variant) As Integer
     IndexOf = -1
 End Function
 
-Sub ApplyTextStyle(ByRef textRange As textRange, ByVal txt As String)
+Function ParseText(line As String) As collection
+    Dim regex As Object
+    Set regex = CreateObject("VBScript.RegExp")
+    regex.Global = True
+    regex.Pattern = "<([^>]+)>([^<]+)"
 
-    ' Define start and end tags for bold and italic text
-    Dim boldStart As String: boldStart = "**"
-    Dim boldEnd As String: boldEnd = "**"
-    Dim italicStart As String: italicStart = "__"
-    Dim italicEnd As String: italicEnd = "__"
-    
-    ' Create variables for positions
-    Dim boldStartPos As Integer
-    Dim boldEndPos As Integer
-    Dim italicStartPos As Integer
-    Dim italicEndPos As Integer
+    Dim matches As Object
+    Set matches = regex.Execute(line)
 
-    ' Apply bold formatting
-    boldStartPos = InStr(txt, boldStart)
-    boldEndPos = InStr(txt, boldEnd)
-    While boldStartPos > 0 And boldEndPos > 0
-        With textRange.Characters(boldStartPos + Len(boldStart), boldEndPos - 1).font
-            .Bold = msoTrue
+    Dim collection As New collection
+
+    Dim match As Object
+    For Each match In matches
+        Dim dict As Object
+        Set dict = CreateObject("Scripting.Dictionary")
+        Dim style As String
+        style = match.SubMatches(0)
+        Dim styleAttributes As Variant
+        styleAttributes = Split(style, ",")
+        dict("font") = Trim(styleAttributes(0))
+        dict("size") = CInt(Trim(styleAttributes(1)))
+        dict("style") = Trim(styleAttributes(2))
+        dict("text") = match.SubMatches(1)
+        collection.Add dict
+    Next match
+
+    Set ParseText = collection
+End Function
+
+
+
+
+
+Sub FormatText(collection As collection, shape As shape)
+    Dim dict As Object
+    Dim start As Integer
+    start = 1
+    Dim fullText As String
+    For Each dict In collection
+        Debug.Print "Text: " & dict("text")
+        Debug.Print "Font: " & dict("font")
+        Debug.Print "Style: " & dict("style")
+        Debug.Print "Size: " & dict("size")
+        Dim text As String
+        text = dict("text")
+        fullText = fullText & text
+        Dim length As Integer
+        length = Len(text)
+        With shape.TextFrame.textRange.Characters(start, start + length - 1).Font
+            .Name = dict("font")
+            .Size = dict("size")
+            If dict("style") = "bold" Then
+                .Bold = msoTrue
+            Else
+                .Bold = msoFalse
+            End If
+            If dict("style") = "italic" Then
+                .Italic = msoTrue
+            Else
+                .Italic = msoFalse
+            End If
         End With
-        txt = Replace(txt, boldStart, "", 1, 1)
-        txt = Replace(txt, boldEnd, "", 1, 1)
-        boldStartPos = InStr(txt, boldStart)
-        boldEndPos = InStr(txt, boldEnd)
-    Wend
-
-    ' Apply italic formatting
-    italicStartPos = InStr(txt, italicStart)
-    italicEndPos = InStr(txt, italicEnd)
-    While italicStartPos > 0 And italicEndPos > 0
-        With textRange.Characters(italicStartPos + 1, italicEndPos - 2).font
-            .Italic = msoTrue
-        End With
-        txt = Replace(txt, italicStart, "", 1, 1)
-        txt = Replace(txt, italicEnd, "", 1, 1)
-        italicStartPos = InStr(txt, italicStart)
-        italicEndPos = InStr(txt, italicEnd)
-    Wend
-
-    ' Assign the modified text to the text range
-    textRange.Text = txt
+        start = start + length
+    Next dict
+    shape.TextFrame.textRange.text = fullText
 End Sub
+
+
+
+
+
+
+
+Sub ApplyTextStyle(textRange As textRange, collection As collection)
+    Dim dict As Object
+    Dim startPos As Long
+    startPos = 1
+    
+    ' Clear the existing text
+    textRange.text = ""
+    
+    For Each dict In collection
+        Dim text As String
+        text = dict("text")
+        Debug.Print "Text: " & dict("text")
+        Debug.Print "Font: " & dict("font")
+        Debug.Print "Style: " & dict("style")
+        Debug.Print "Size: " & dict("size")
+        
+        ' Append the formatted text to the existing text range
+        textRange.InsertAfter text
+        With textRange.Characters(startPos, Len(text)).Font
+            .Name = dict("font")
+            .Size = dict("size")
+            If dict("style") = "bold" Then
+                .Bold = msoTrue
+            Else
+                .Bold = msoFalse
+            End If
+            If dict("style") = "italic" Then
+                .Italic = msoTrue
+            Else
+                .Italic = msoFalse
+            End If
+        End With
+        
+        startPos = startPos + Len(text)
+    Next dict
+End Sub
+
+
+
+
 Sub ReplaceObjects()
 
     Dim fso As New FileSystemObject
     Dim folder As folder
     Dim subfolder As folder
     Dim file As file
-    Dim filePaths As New Collection
-    Dim fileNames As New Collection
+    Dim filePaths As New collection
+    Dim fileNames As New collection
     Dim shapeZOrder As New Scripting.Dictionary
 
     ' 1. Prompt for a directory
@@ -97,33 +167,38 @@ Sub ReplaceObjects()
 
     ' 3. Iterate through all slides and objects
     Dim idx As Integer
-    Debug.Print "Iterating slides..."
+    'Debug.Print "Iterating slides..."
     Dim slide As PowerPoint.slide
     For Each slide In ActivePresentation.Slides
-        Debug.Print "Iterating shapes in slide " & slide.SlideNumber
+        ' Clear the ZOrder dictionary for each new slide
+        shapeZOrder.RemoveAll
+
+        'Debug.Print "Iterating shapes in slide " & slide.SlideNumber
         Dim shape As PowerPoint.shape
         For Each shape In slide.Shapes
-            If left(shape.Name, 2) = "#+" Then ' if the object is to be replaced
-                Debug.Print "Checking shape " & shape.Name
+            ' Save the ZOrder for all shapes (not just those to be replaced)
+            Dim shapeKey As String
+            shapeKey = shape.Name & "-" & shape.ZOrderPosition
+            shapeZOrder.Add shapeKey, shape.ZOrderPosition
+        Next shape
+
+        ' Iterate again for replacement
+        For Each shape In slide.Shapes
+            If Left(shape.Name, 2) = "#+" Then ' if the object is to be replaced
+                'Debug.Print "Checking shape " & shape.Name
                 idx = IndexOf(fileNames, Mid(shape.Name, 3)) ' get the index of the file by name
                 If idx <> -1 Then ' if file is found
-                      Debug.Print "a matching file was found "
+                    'Debug.Print "a matching file was found "
                     ' check if it's a picture or a text file
                     If Right(fileNames.Item(idx), 3) = "png" Or Right(fileNames.Item(idx), 3) = "jpg" Then
-                        Debug.Print "11111 Its a PNG 11111"
+                        'Debug.Print "11111 Its a PNG 11111"
                         If shape.Type = msoPicture Or shape.Type = msoLinkedPicture Then ' if shape is a picture
-                            
-                            ' Before deleting the old shape, store its Z-Order
-                            If Not shapeZOrder.Exists(shape.Name) Then
-                                shapeZOrder.Add shape.Name, shape.ZOrderPosition
-                            End If
-                            
                             ' keep old picture properties
                             Dim oldCropTop As Single: oldCropTop = shape.PictureFormat.CropTop
                             Dim oldCropBottom As Single: oldCropBottom = shape.PictureFormat.CropBottom
                             Dim oldCropLeft As Single: oldCropLeft = shape.PictureFormat.CropLeft
                             Dim oldCropRight As Single: oldCropRight = shape.PictureFormat.CropRight
-                            
+
                             ' remove cropping before deleting
                             With shape.PictureFormat
                                 .CropTop = 0
@@ -131,21 +206,22 @@ Sub ReplaceObjects()
                                 .CropLeft = 0
                                 .CropRight = 0
                             End With
-                            
+
                             ' image size without cropping
                             Dim oldName As String: oldName = shape.Name
-                            Dim oldLeft As Single: oldLeft = shape.left
+                            Dim oldLeft As Single: oldLeft = shape.Left
                             Dim oldTop As Single: oldTop = shape.top
                             Dim oldWidth As Single: oldWidth = shape.width
                             Dim oldHeight As Single: oldHeight = shape.height
-                            
+                            Dim oldZOrder As Integer: oldZOrder = shapeZOrder(oldName & "-" & shape.ZOrderPosition)
+
                             shape.Delete
-                            
+
                             ' add new picture
                             Dim newShape As PowerPoint.shape
                             Set newShape = slide.Shapes.AddPicture(filePaths.Item(idx), _
                                     msoFalse, msoTrue, oldLeft, oldTop, oldWidth, oldHeight)
-                            
+
                             ' restore cropping
                             With newShape.PictureFormat
                                 .CropTop = oldCropTop
@@ -153,31 +229,37 @@ Sub ReplaceObjects()
                                 .CropLeft = oldCropLeft
                                 .CropRight = oldCropRight
                             End With
-                            
-                            ' After adding the new shape, restore its Z-Order
-                            If shapeZOrder.Exists(newShape.Name) Then
-                                Do While newShape.ZOrderPosition < shapeZOrder(newShape.Name)
-                                    newShape.ZOrder msoBringForward
-                                Loop
-                                Do While newShape.ZOrderPosition > shapeZOrder(newShape.Name)
-                                    newShape.ZOrder msoSendBackward
-                                Loop
-                            End If
-                            
+
+                            ' Restore the ZOrder
+                            Do While newShape.ZOrderPosition < oldZOrder
+                                newShape.ZOrder msoBringForward
+                            Loop
+                            Do While newShape.ZOrderPosition > oldZOrder
+                                newShape.ZOrder msoSendBackward
+                            Loop
+
                             newShape.Name = oldName
-                            
+
                             ' sleep for 50 milliseconds
                             Sleep 50
-                            Debug.Print "----FILE WAS REPLACED ----- "
+                            'Debug.Print "----FILE WAS REPLACED ----- "
                         End If
                     ElseIf Right(fileNames.Item(idx), 3) = "txt" Then
                         If shape.Type = msoTextBox Then ' if shape is a text box
-                            ' read the content of the text file and replace the text box content
+                            ' read the content of the text file
                             Dim textStream As textStream
                             Set textStream = fso.OpenTextFile(filePaths.Item(idx), ForReading)
-                            ApplyTextStyle shape.TextFrame.textRange, textStream.ReadAll
+                            Dim text As String
+                            text = textStream.ReadAll
                             textStream.Close
-                            
+                    
+                            ' parse the text and format the text box content
+                            Dim collection As collection
+                            Set collection = ParseText(text)
+                            ' FormatText collection, shape
+                            ApplyTextStyle shape.TextFrame.textRange, collection
+
+
                             ' sleep for 50 milliseconds
                             Sleep 50
                         End If
@@ -187,6 +269,10 @@ Sub ReplaceObjects()
         Next shape
     Next slide
 End Sub
+
+
+
+
 
 
 
