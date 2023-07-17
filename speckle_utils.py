@@ -7,7 +7,8 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
-from specklepy.objects.geometry import Polyline, Point
+from specklepy.objects.geometry import Polyline, Point, Mesh
+
 from specklepy.api.wrapper import StreamWrapper
 try:
     import openai
@@ -89,10 +90,8 @@ def getSpeckleStream(stream_id,
     [print(ite.createdAt) for ite in branch.commits.items]
 
     if commit_id == "":
-        print("oke",branch.commits)
         latest_commit = branch.commits.items[0]
         choosen_commit_id = latest_commit.id
-        print("afasfgagagag!", choosen_commit_id)
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("latest commit ", branch.commits.items[0].createdAt, " was choosen")
     else:
@@ -572,12 +571,21 @@ def specklePolyline2Patches(speckle_objs, pth_to_geo="curves", id_key=None):
 
     for obj in speckle_objs:
         obj_geo = obj[pth_to_geo]
-        obj_pts = Polyline.as_points(obj_geo)
+        
         coorX = []
         coorY = []
-        for pt in obj_pts:
-            coorX.append(pt.x)
-            coorY.append(pt.y)
+        
+        if isinstance(obj_geo, Mesh):
+            # For meshes, we'll just use the vertices for now
+            for pt in obj_geo.vertices:
+                coorX.append(pt.x)
+                coorY.append(pt.y)
+        else:
+            # For polylines, we'll use the existing logic
+            obj_pts = Polyline.as_points(obj_geo)
+            for pt in obj_pts:
+                coorX.append(pt.x)
+                coorY.append(pt.y)
 
         patchesDict["patches_x"].append(coorX)
         patchesDict["patches_y"].append(coorY)
