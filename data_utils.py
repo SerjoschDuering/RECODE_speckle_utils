@@ -156,6 +156,19 @@ def colab_create_directory(base_name):
     os.mkdir(dir_name)
     return dir_name
 
+def smart_round(x):
+    if abs(x) >= 1000:
+        return round(x)
+    elif abs(x) >= 10:
+        print('x value is', x)
+        return round(x, 1)
+    elif abs(x) >= 1:
+        print('x value is', x)
+        return round(x, 2)
+    else:
+        print('x value is', x)
+        return round(x, 3)
+
 def colab_zip_download_folder(dir_name):
     """ zips and downloads a directory from colab. will only work in google colab
     Args: 
