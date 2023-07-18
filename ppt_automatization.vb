@@ -49,13 +49,11 @@ End Function
 
 
 
-
-
 Sub FormatText(collection As collection, shape As shape)
     Dim dict As Object
     Dim start As Integer
     start = 1
-    Dim fullText As String
+    shape.TextFrame.textRange.text = "" ' Clear the existing text
     For Each dict In collection
         Debug.Print "Text: " & dict("text")
         Debug.Print "Font: " & dict("font")
@@ -63,12 +61,15 @@ Sub FormatText(collection As collection, shape As shape)
         Debug.Print "Size: " & dict("size")
         Dim text As String
         text = dict("text")
-        fullText = fullText & text
+        shape.TextFrame.textRange.InsertAfter text ' Append the text to the existing text
+        
         Dim length As Integer
         length = Len(text)
         With shape.TextFrame.textRange.Characters(start, start + length - 1).Font
             .Name = dict("font")
             .Size = dict("size")
+            .Smallcaps = msoFalse ' Add this line to disable Small Caps
+            .Allcaps = msoFalse ' Add this line to disable All Caps
             If dict("style") = "bold" Then
                 .Bold = msoTrue
             Else
@@ -82,12 +83,7 @@ Sub FormatText(collection As collection, shape As shape)
         End With
         start = start + length
     Next dict
-    shape.TextFrame.textRange.text = fullText
 End Sub
-
-
-
-
 
 
 
@@ -112,6 +108,8 @@ Sub ApplyTextStyle(textRange As textRange, collection As collection)
         With textRange.Characters(startPos, Len(text)).Font
             .Name = dict("font")
             .Size = dict("size")
+            '.Allcaps = msoFalse ' Add this line to disable All Caps
+            '.Smallcaps = msoFalse ' Add this line to disable Small Caps
             If dict("style") = "bold" Then
                 .Bold = msoTrue
             Else
@@ -258,6 +256,7 @@ Sub ReplaceObjects()
                             Set collection = ParseText(text)
                             ' FormatText collection, shape
                             ApplyTextStyle shape.TextFrame.textRange, collection
+                            shape.TextFrame2.textRange.Font.Allcaps = msoFalse
 
 
                             ' sleep for 50 milliseconds
