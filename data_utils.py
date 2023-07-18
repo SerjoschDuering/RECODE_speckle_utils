@@ -97,6 +97,35 @@ def sort_and_match_df(A, B, uuid_column):
     merged_df = pd.merge(A, B, on=uuid_column, how='left')
     return merged_df
 
+def sort_and_match_dfs(dfs, uuid_column):
+    """
+    Sorts and matches all DataFrames in list based on a shared uuid_column.
+    Raises a warning if any two DataFrames have overlapping column names.
+    
+    Parameters:
+    dfs (list): A list of DataFrames to be sorted and matched.
+    uuid_column (str): Shared column for matching rows.
+    
+    Returns:
+    DataFrame: Resulting DataFrame after successive left joins on uuid_column.
+    """
+    if not dfs:
+        raise ValueError("The input list of DataFrames is empty")
+    
+    # Check for overlapping column names
+    all_columns = [set(df.columns) for df in dfs]
+    for i, columns_i in enumerate(all_columns):
+        for j, columns_j in enumerate(all_columns[i+1:], start=i+1):
+            overlapping_columns = columns_i.intersection(columns_j) - {uuid_column}
+            if overlapping_columns:
+                print(f"Warning: DataFrames at indices {i} and {j} have overlapping column(s): {', '.join(overlapping_columns)}")
+    
+    result_df = dfs[0]  # start with the first DataFrame
+    for df in dfs[1:]:  # then merge each remaining DataFrame one by one
+        result_df = pd.merge(result_df, df, on=uuid_column, how='left')
+    return result_df
+
+
 
 def transform_to_score(data, minPts, maxPts, t_low, t_high, cull_invalid=False):
     """
