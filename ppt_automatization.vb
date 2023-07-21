@@ -47,43 +47,58 @@ Function ParseText(line As String) As collection
     Set ParseText = collection
 End Function
 
+Function ParseTableText(line As String) As collection
+    ' Split the line into individual cell information
+    Dim cellInfos As Variant
+    cellInfos = Split(line, "]")
+    
+    Dim collection As New collection
+
+    Dim cellInfo As Variant
+    For Each cellInfo In cellInfos
+        ' Ignore empty strings
+        If Trim(cellInfo) <> "" Then
+            ' Remove the opening bracket
+            cellInfo = Replace(cellInfo, "[", "")
+            
+            ' Split the cell info into location and text
+            Dim locAndText As Variant
+            locAndText = Split(cellInfo, " ", 2)
+            
+            ' Remove the parentheses
+            Dim locString As String
+            locString = Replace(locAndText(0), "(", "")
+            locString = Replace(locString, ")", "")
+            
+            ' Split the location into row and column
+            Dim loc As Variant
+            loc = Split(locString, ",")
+            
+            ' Debug statements to inspect the variables
+            Debug.Print "locAndText: "; locAndText(0)
+            Debug.Print "loc: "; loc(0)
+            
+            ' Create a dictionary and add it to the collection
+            Dim dict As Object
+            Set dict = CreateObject("Scripting.Dictionary")
+            dict("row") = CInt(Trim(loc(1)))
+            dict("col") = CInt(Trim(loc(0)))
+            dict("text") = locAndText(1)
+            collection.Add dict
+        End If
+    Next cellInfo
+
+    Set ParseTableText = collection
+End Function
 
 
-Sub FormatText(collection As collection, shape As shape)
-    Dim dict As Object
-    Dim start As Integer
-    start = 1
-    shape.TextFrame.textRange.text = "" ' Clear the existing text
-    For Each dict In collection
-        Debug.Print "Text: " & dict("text")
-        Debug.Print "Font: " & dict("font")
-        Debug.Print "Style: " & dict("style")
-        Debug.Print "Size: " & dict("size")
-        Dim text As String
-        text = dict("text")
-        shape.TextFrame.textRange.InsertAfter text ' Append the text to the existing text
-        
-        Dim length As Integer
-        length = Len(text)
-        With shape.TextFrame.textRange.Characters(start, start + length - 1).Font
-            .Name = dict("font")
-            .Size = dict("size")
-            .Smallcaps = msoFalse ' Add this line to disable Small Caps
-            .Allcaps = msoFalse ' Add this line to disable All Caps
-            If dict("style") = "bold" Then
-                .Bold = msoTrue
-            Else
-                .Bold = msoFalse
-            End If
-            If dict("style") = "italic" Then
-                .Italic = msoTrue
-            Else
-                .Italic = msoFalse
-            End If
-        End With
-        start = start + length
-    Next dict
-End Sub
+
+
+
+
+
+
+
 
 
 
@@ -98,10 +113,6 @@ Sub ApplyTextStyle(textRange As textRange, collection As collection)
     For Each dict In collection
         Dim text As String
         text = dict("text")
-        Debug.Print "Text: " & dict("text")
-        Debug.Print "Font: " & dict("font")
-        Debug.Print "Style: " & dict("style")
-        Debug.Print "Size: " & dict("size")
         
         ' Append the formatted text to the existing text range
         textRange.InsertAfter text
@@ -189,7 +200,6 @@ Sub ReplaceObjects()
                     'Debug.Print "a matching file was found "
                     ' check if it's a picture or a text file
                     If Right(fileNames.Item(idx), 3) = "png" Or Right(fileNames.Item(idx), 3) = "jpg" Then
-                        'Debug.Print "11111 Its a PNG 11111"
                         If shape.Type = msoPicture Or shape.Type = msoLinkedPicture Then ' if shape is a picture
                             ' keep old picture properties
                             Dim oldCropTop As Single: oldCropTop = shape.PictureFormat.CropTop
@@ -254,11 +264,44 @@ Sub ReplaceObjects()
                             ' parse the text and format the text box content
                             Dim collection As collection
                             Set collection = ParseText(text)
-                            ' FormatText collection, shape
+                           
                             ApplyTextStyle shape.TextFrame.textRange, collection
                             shape.TextFrame2.textRange.Font.Allcaps = msoFalse
-
-
+                        ElseIf shape.Type = msoTable Then ' if shape is a table
+                            ' read the content of the text file
+                            Dim textStreamTab As textStream
+                            Set textStreamTab = fso.OpenTextFile(filePaths.Item(idx), ForReading)
+                            Dim textTab As String
+                            textTab = textStreamTab.ReadAll
+                            textStreamTab.Close
+                        
+                            ' parse the text and format the table content
+                            Dim collectionTab As collection
+                            Set collectionTab = ParseTableText(textTab)
+                            Debug.Print textTab
+                            Dim dict As Object
+                            Debug.Print "---------okk----------------"
+                            For Each dict In collectionTab
+                                ' Print the dictionary contents for inspection
+                                Debug.Print "Row: " & dict("row")
+                                Debug.Print "Column: " & dict("col")
+                                Debug.Print "Text: " & dict("text")
+                                Debug.Print "-------------------------"
+                                
+                                Dim row As Integer
+                                row = dict("row")
+                                Dim col As Integer
+                                col = dict("col")
+                                If row <= shape.Table.Rows.Count And col <= shape.Table.Columns.Count Then
+                                    Dim cellText As String
+                                    cellText = dict("text")
+                                    Dim cellCollection As collection
+                                    Set cellCollection = ParseText(cellText)
+                                    ApplyTextStyle shape.Table.Cell(row, col).shape.TextFrame.textRange, cellCollection
+                                    shape.Table.Cell(row, col).shape.TextFrame2.textRange.Font.Allcaps = msoFalse
+                                End If
+                            Next dict
+                        
                             ' sleep for 50 milliseconds
                             Sleep 50
                         End If
