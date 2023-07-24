@@ -625,7 +625,7 @@ def radar(values_norm,
     ax.plot(angles, values_norm, color=color, linewidth=2)
 
     # Fill it in.
-    ax.fill(angles, values_norm, color=color, alpha=0.85)
+    ax.fill(angles, values_norm, color=color, alpha=0.15)
 
     # Fix axis to go in the right order and start at 12 o'clock.
     ax.set_theta_offset(np.pi / 2)
