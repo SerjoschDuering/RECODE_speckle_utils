@@ -342,17 +342,30 @@ def calculate_aspect_ratio(all_x_coords, all_y_coords):
     return (size, aspect_ratio) if aspect_ratio > 1 else (size / aspect_ratio, size)
 
 
-def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioning = [0.9, 0.4, 0.02, 0.38], tick_unit=""):
+def create_colorbar(fig, ax, dataset, coloring_col, cmap, title="", cb_positioning=[0.9, 0.4, 0.02, 0.38],
+                     tick_unit="", normalize_override=("min", "max")):
+    
     divider = make_axes_locatable(ax)
     divider.append_axes("right", size="2%", pad=5.55)
 
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=dataset[coloring_col].min(), vmax=dataset[coloring_col].max()))
+    # Determine normalization values
+    if normalize_override[0] == "min":
+        vmin = dataset[coloring_col].min()
+    else:
+        vmin = normalize_override[0]
+
+    if normalize_override[1] == "max":
+        vmax = dataset[coloring_col].max()
+    else:
+        vmax = normalize_override[1]
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
 
     colorbar_ax = fig.add_axes(cb_positioning)
     colorbar = fig.colorbar(sm, cax=colorbar_ax)
 
-    min_tick = dataset[coloring_col].min()
-    max_tick = dataset[coloring_col].max()
+    min_tick = vmin
+    max_tick = vmax
     colorbar.set_ticks([min_tick*1.05, max_tick*0.95])
     colorbar.ax.set_yticklabels([
                                  str(round(min_tick,1))+" " +tick_unit, 
@@ -455,7 +468,8 @@ def createActivityNodePlot(dataset,
                            data_col=None, 
                            cb_positioning = [0.9, 0.4, 0.02, 0.38], 
                            draw_oder_instruction=['-', '-', '+'],
-                           tick_unit=""):
+                           tick_unit="",
+                           normalise_override=("min", "max")):
     
     """
     This function creates an activity node plot using the provided dataset, and optionally includes a colorbar. 
@@ -518,7 +532,9 @@ def createActivityNodePlot(dataset,
     color_data_exists = is_numeric_dtype(dataset[coloring_col])
 
     if color_data_exists:
-        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, cb_positioning = cb_positioning, tick_unit=tick_unit)
+        sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, 
+                                       cb_positioning = cb_positioning, tick_unit=tick_unit,
+                                       normalise_override=normalise_override))
     drawing_order = get_drawing_order(dataset, [1, 3, 2], draw_oder_instruction)
 
     draw_polygons(ax, 
