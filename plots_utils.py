@@ -469,7 +469,7 @@ def createActivityNodePlot(dataset,
                            cb_positioning = [0.9, 0.4, 0.02, 0.38], 
                            draw_oder_instruction=['-', '-', '+'],
                            tick_unit="",
-                           normalise_override=("min", "max")):
+                           normalize_override=("min", "max")):
     
     """
     This function creates an activity node plot using the provided dataset, and optionally includes a colorbar. 
@@ -534,7 +534,7 @@ def createActivityNodePlot(dataset,
     if color_data_exists:
         sm, colorbar = create_colorbar(fig, ax, dataset, coloring_col, cmap, colorbar_title, 
                                        cb_positioning = cb_positioning, tick_unit=tick_unit,
-                                       normalise_override=normalise_override))
+                                       normalize_override=normalize_override)
     drawing_order = get_drawing_order(dataset, [1, 3, 2], draw_oder_instruction)
 
     draw_polygons(ax, 
