@@ -76,7 +76,7 @@ Function ParseTableText(line As String) As collection
             
             ' Debug statements to inspect the variables
             Debug.Print "locAndText: "; locAndText(0)
-            Debug.Print "loc: "; loc(0)
+            'Debug.Print "loc: "; loc(0)
             
             ' Create a dictionary and add it to the collection
             Dim dict As Object
@@ -311,6 +311,8 @@ Sub ReplaceObjects()
         Next shape
     Next slide
 End Sub
+
+
 
 
 
