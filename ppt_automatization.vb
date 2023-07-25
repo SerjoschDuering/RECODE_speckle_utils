@@ -93,15 +93,6 @@ End Function
 
 
 
-
-
-
-
-
-
-
-
-
 Sub ApplyTextStyle(textRange As textRange, collection As collection)
     Dim dict As Object
     Dim startPos As Long
@@ -149,6 +140,24 @@ Sub ReplaceObjects()
     Dim filePaths As New collection
     Dim fileNames As New collection
     Dim shapeZOrder As New Scripting.Dictionary
+    
+    ' log file
+    Dim logFile As textStream
+    Dim logFileName As String
+    Const MAX_PATH As Integer = 260
+    Dim imagesReplaced As Integer
+    Dim textsReplaced As Integer
+    Dim tablesReplaced As Integer
+    Dim noFileMatched As Integer
+    
+    ' Initialize counters
+    imagesReplaced = 0
+    textsReplaced = 0
+    tablesReplaced = 0
+    noFileMatched = 0
+    
+    
+    
 
     ' 1. Prompt for a directory
     With Application.FileDialog(msoFileDialogFolderPicker)
@@ -156,21 +165,35 @@ Sub ReplaceObjects()
         .AllowMultiSelect = False
         If .Show = -1 Then ' If OK is pressed
             Set folder = fso.GetFolder(.SelectedItems(1))
+            logFileName = folder.Path & "\LogFile.txt" ' Create log file in selected directory
+            Set logFile = fso.CreateTextFile(logFileName, True)
+            logFile.WriteLine "Files with too long filepaths:"
         Else
             Exit Sub
         End If
     End With
+    
+    
+   
 
     ' 2. Index all files within the directory and its subdirectories
     Debug.Print "Indexing files..."
     For Each file In folder.Files
-        filePaths.Add file.Path
-        fileNames.Add file.Name
+          If Len(file.Path) > MAX_PATH Then
+                logFile.WriteLine file.Path
+            Else
+                filePaths.Add file.Path
+                fileNames.Add file.Name
+            End If
     Next file
     For Each subfolder In folder.SubFolders
         For Each file In subfolder.Files
-            filePaths.Add file.Path
-            fileNames.Add file.Name
+            If Len(file.Path) > MAX_PATH Then
+                logFile.WriteLine file.Path
+            Else
+                filePaths.Add file.Path
+                fileNames.Add file.Name
+            End If
         Next file
     Next subfolder
 
@@ -247,6 +270,8 @@ Sub ReplaceObjects()
                             Loop
 
                             newShape.Name = oldName
+                            
+                            imagesReplaced = imagesReplaced + 1
 
                             ' sleep for 50 milliseconds
                             Sleep 50
@@ -267,6 +292,7 @@ Sub ReplaceObjects()
                            
                             ApplyTextStyle shape.TextFrame.textRange, collection
                             shape.TextFrame2.textRange.Font.Allcaps = msoFalse
+                            textsReplaced = textsReplaced + 1
                         ElseIf shape.Type = msoTable Then ' if shape is a table
                             ' read the content of the text file
                             Dim textStreamTab As textStream
@@ -280,14 +306,7 @@ Sub ReplaceObjects()
                             Set collectionTab = ParseTableText(textTab)
                             Debug.Print textTab
                             Dim dict As Object
-                            Debug.Print "---------okk----------------"
                             For Each dict In collectionTab
-                                ' Print the dictionary contents for inspection
-                                Debug.Print "Row: " & dict("row")
-                                Debug.Print "Column: " & dict("col")
-                                Debug.Print "Text: " & dict("text")
-                                Debug.Print "-------------------------"
-                                
                                 Dim row As Integer
                                 row = dict("row")
                                 Dim col As Integer
@@ -301,15 +320,49 @@ Sub ReplaceObjects()
                                     shape.Table.Cell(row, col).shape.TextFrame2.textRange.Font.Allcaps = msoFalse
                                 End If
                             Next dict
-                        
+                            tablesReplaced = tablesReplaced + 1
                             ' sleep for 50 milliseconds
                             Sleep 50
                         End If
+                    
                     End If
+                Else
+                    ' No matching file found, log the object name
+                    noFileMatched = noFileMatched + 1
+                    logFile.WriteLine "No matching file found for object: " & shape.Name & "  Slide: " & slide.SlideNumber
                 End If
             End If
         Next shape
     Next slide
+    ' Write the totals to the log file
+    logFile.WriteLine " "
+    logFile.WriteLine "Stats:"
+    logFile.WriteLine "Total unmatched assets: " & noFileMatched
+    logFile.WriteLine "Total images replaced: " & imagesReplaced
+    logFile.WriteLine "Total texts replaced: " & textsReplaced
+    logFile.WriteLine "Total tables replaced: " & tablesReplaced
+    logFile.Close
+    
+    
+    ' Create message box with stats
+    If noFileMatched = 0 Then
+        MsgBox "Stats:" & vbCrLf & _
+        "Success, all taged objects were matched with a file" & vbCrLf & _
+        " " & vbCrLf & _
+        "Total images replaced: " & imagesReplaced & vbCrLf & _
+        "Total texts replaced: " & textsReplaced & vbCrLf & _
+        "Total tables replaced: " & tablesReplaced, _
+        vbOKOnly + vbInformation, "Process Finished"
+    Else
+        MsgBox "Stats:" & vbCrLf & _
+        "Total unmatched assets: " & noFileMatched & vbCrLf & _
+        "look at the logFile for more information " & vbCrLf & _
+        " " & vbCrLf & _
+        "Total images replaced: " & imagesReplaced & vbCrLf & _
+        "Total texts replaced: " & textsReplaced & vbCrLf & _
+        "Total tables replaced: " & tablesReplaced, _
+        vbOKOnly + vbExclamation, "Process Finished with unmatched assets"
+    End If
 End Sub
 
 
