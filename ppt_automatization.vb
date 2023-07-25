@@ -196,7 +196,8 @@ Sub ReplaceObjects()
             End If
         Next file
     Next subfolder
-
+    logFile.WriteLine "-"
+    logFile.WriteLine "unmatched files:"
     ' 3. Iterate through all slides and objects
     Dim idx As Integer
     'Debug.Print "Iterating slides..."
@@ -335,6 +336,7 @@ Sub ReplaceObjects()
         Next shape
     Next slide
     ' Write the totals to the log file
+    logFile.WriteLine "-"
     logFile.WriteLine " "
     logFile.WriteLine "Stats:"
     logFile.WriteLine "Total unmatched assets: " & noFileMatched
@@ -364,14 +366,3 @@ Sub ReplaceObjects()
         vbOKOnly + vbExclamation, "Process Finished with unmatched assets"
     End If
 End Sub
-
-
-
-
-
-
-
-
-
-
-
