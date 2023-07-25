@@ -21,7 +21,10 @@ def helper():
     print("colab_create_directory(base_name) -> create a directory with the given name, if it already exists, add a number to the end of the name, usefull for colab")
     print("colab_zip_download_folder(dir_name) -> zips and downloads a directory from colab. will only work in google colaboratory ")
 
-def cleanData(data, mode="drop", num_only=False):
+import numpy as np
+import pandas as pd
+
+def cleanData(data, mode="drop", num_only=False, print_report=True):
     """
     Cleans data by handling missing or null values according to the specified mode.
 
@@ -31,10 +34,12 @@ def cleanData(data, mode="drop", num_only=False):
                               "drop" drops rows with missing values (default),
                               "replace_zero" replaces missing values with zero,
                               "replace_mean" replaces missing values with the mean of the column.
-        num_only (bool, optional): If True and data is a DataFrame, only numeric columns are kept. Defaults to False.
+        num_only (bool, optional): If True and data is a DataFrame, only numeric columns are kept. Defaults to False.#
+        print_report (bool, optional): if True the report is printed to the console. Defaults to True.
 
     Returns:
         numpy.ndarray, pandas.DataFrame, pandas.Series: Cleaned data with the same type as the input.
+
 
     Raises:
         ValueError: If the input data type is not supported (must be numpy.ndarray, pandas.DataFrame or pandas.Series).
@@ -43,35 +48,39 @@ def cleanData(data, mode="drop", num_only=False):
     It supports pandas DataFrame, pandas Series, and numpy array. For pandas DataFrame, it can optionally 
     convert and keep only numeric columns.
     """
-
-    # check the type of input data
+    report = {}
     if isinstance(data, pd.DataFrame):
+        initial_cols = data.columns.tolist()
+        initial_rows = data.shape[0]
         if num_only:
+            # attempt casting before doing this selection
+            data = data.apply(pd.to_numeric, errors='coerce')
             data = data.select_dtypes(include=['int64', 'float64'])
-        else:
-          data_copy = data.copy()
-          for col in data.columns:
-              data[col] = pd.to_numeric(data[col], errors='coerce')
-              data[col].fillna(data_copy[col], inplace=True)
-  
+            report['dropped_cols'] = list(set(initial_cols) - set(data.columns.tolist()))
+
         if mode == "drop":
             data = data.dropna()
+            report['dropped_rows'] = initial_rows - data.shape[0]
         elif mode=="replace_zero":
             data = data.fillna(0)
         elif mode=="replace_mean":
             data = data.fillna(data.mean())
 
     elif isinstance(data, pd.Series):
+        initial_length = len(data)
         if mode == "drop":
             data = data.dropna()
+            report['dropped_rows'] = initial_length - len(data)
         elif mode=="replace_zero":
             data = data.fillna(0)
         elif mode=="replace_mean":
             data = data.fillna(data.mean())
 
     elif isinstance(data, np.ndarray):
+        initial_length = data.size
         if mode=="drop":
             data = data[~np.isnan(data)]
+            report['dropped_rows'] = initial_length - data.size
         elif mode=="replace_zero":
             data = np.nan_to_num(data, nan=0)
         elif mode=="replace_mean":
@@ -79,8 +88,10 @@ def cleanData(data, mode="drop", num_only=False):
 
     else:
         raise ValueError("Unsupported data type")
-
+    if print_report:
+        print(report)   
     return data
+
 
 
 def sort_and_match_df(A, B, uuid_column):
@@ -351,5 +362,187 @@ def generate_cluster_description_mixed(cluster_df, original_df=None, stats_list=
 
     return cluster_description, data_description
 
+# ==================================================================================================
+# ========== TESTING ===============================================================================
+
+def compare_column_names(ref_list, check_list):
+    """
+    Compares two lists of column names to check for inconsistencies.
+
+    Args:
+        ref_list (list): The reference list of column names.
+        check_list (list): The list of column names to be checked.
+
+    Returns:
+        report_dict (dict): Report about the comparison process.
+
+    Raises:
+        ValueError: If the input types are not list.
+    """
+    # Check the type of input data
+    if not all(isinstance(i, list) for i in [ref_list, check_list]):
+        raise ValueError("Both inputs must be of type list")
+
+    missing_cols = [col for col in ref_list if col not in check_list]
+    extra_cols = [col for col in check_list if col not in ref_list]
+    
+    try:
+      typos = {}
+      for col in check_list:
+          if col not in ref_list:
+              similarity_scores = {ref_col: fuzz.ratio(col, ref_col) for ref_col in ref_list}
+              likely_match = max(similarity_scores, key=similarity_scores.get)
+              if similarity_scores[likely_match] > 70:  # you may adjust this threshold as needed
+                  typos[col] = likely_match
+    except:
+      typos = {"error":"fuzzywuzzy is probably not installed"}
+
+    report_dict = {
+        "missing_columns": missing_cols,
+        "extra_columns": extra_cols,
+        "likely_typos": typos
+    }
+
+    print("\nREPORT:")
+    print('-'*50)
+    print("\n- Missing columns:")
+    print('   ' + '\n   '.join(f'"{col}"' for col in missing_cols) if missing_cols else '   None')
+    print("\n- Extra columns:")
+    print('   ' + '\n   '.join(f'"{col}"' for col in extra_cols) if extra_cols else '   None')
+    print("\n- Likely typos:")
+    if typos:
+        for k, v in typos.items():
+            print(f'   "{k}": "{v}"')
+    else:
+        print('   None')
+
+    return report_dict
 
 
+def compare_dataframes(df1, df2, threshold=0.1):
+    """
+    Compare two pandas DataFrame and returns a report highlighting any significant differences.
+    Significant differences are defined as differences that exceed the specified threshold.
+
+    Args:
+        df1, df2 (pandas.DataFrame): Input dataframes to be compared.
+        threshold (float): The percentage difference to be considered significant. Defaults to 0.1 (10%).
+
+    Returns:
+        pandas.DataFrame: A report highlighting the differences between df1 and df2.
+    """
+    # Column comparison
+    cols_df1 = set(df1.columns)
+    cols_df2 = set(df2.columns)
+    
+    common_cols = cols_df1 & cols_df2
+    missing_df1 = cols_df2 - cols_df1
+    missing_df2 = cols_df1 - cols_df2
+
+    print("Column Comparison:")
+    print("------------------")
+    print(f"Common columns ({len(common_cols)}): {sorted(list(common_cols)) if common_cols else 'None'}")
+    print(f"Columns missing in df1 ({len(missing_df1)}): {sorted(list(missing_df1)) if missing_df1 else 'None'}")
+    print(f"Columns missing in df2 ({len(missing_df2)}): {sorted(list(missing_df2)) if missing_df2 else 'None'}")
+    print("\n")
+
+    # Check for new null values
+    print("Null Values Check:")
+    print("------------------")
+    inconsistent_values_cols = []
+    inconsistent_ranges_cols = []
+    constant_cols = []
+    
+    for col in common_cols:
+        nulls1 = df1[col].isnull().sum()
+        nulls2 = df2[col].isnull().sum()
+        if nulls1 == 0 and nulls2 > 0:
+            print(f"New null values detected in '{col}' of df2.")
+
+        # Check for value consistency
+        if df1[col].nunique() <= 10 and df2[col].nunique() <= 10:
+            inconsistent_values_cols.append(col)
+
+        
+          # Check for range consistency
+        if df1[col].dtype.kind in 'if' and df2[col].dtype.kind in 'if':
+          range1 = df1[col].max() - df1[col].min()
+          range2 = df2[col].max() - df2[col].min()
+          diff = abs(range1 - range2)
+          mean_range = (range1 + range2) / 2
+          if diff / mean_range * 100 > threshold * 100:
+              inconsistent_ranges_cols.append(col)
+
+        # Check for constant columns
+        if len(df1[col].unique()) == 1 or len(df2[col].unique()) == 1:
+            constant_cols.append(col)
+
+    # Print out the results of value consistency, range consistency, and constant columns check
+    print("\nValue Consistency Check:")
+    print("------------------------")
+    print(f"Columns with inconsistent values (checks if the unique values are the same in both dataframes): {inconsistent_values_cols if inconsistent_values_cols else 'None'}")
+    
+    print("\nRange Consistency Check (checks if the range (max - min) of the values in both dataframes is consistent):")
+    print("------------------------")
+    print(f"Columns with inconsistent ranges: {inconsistent_ranges_cols if inconsistent_ranges_cols else 'None'}")
+    
+    print("\nConstant Columns Check (columns that have constant values in either dataframe):")
+    print("-----------------------")
+    print(f"Constant columns: {constant_cols if constant_cols else 'None'}")
+
+    # Check for changes in data type
+    print("\nData Type Check:")
+    print("----------------")
+    for col in common_cols:
+        dtype1 = df1[col].dtype
+        dtype2 = df2[col].dtype
+        if dtype1 != dtype2:
+            print(f"df1 '{dtype1}' -> '{dtype2}' in df2, Data type for '{col}' has changed.")
+    print("\n")
+    
+  
+
+    report_dict = {"column": [], "statistic": [], "df1": [], "df2": [], "diff%": []}
+    statistics = ["mean", "std", "min", "25%", "75%", "max", "nulls", "outliers"]
+
+    for col in common_cols:
+        if df1[col].dtype in ['int64', 'float64'] and df2[col].dtype in ['int64', 'float64']:
+            desc1 = df1[col].describe()
+            desc2 = df2[col].describe()
+            for stat in statistics[:-2]:
+                report_dict["column"].append(col)
+                report_dict["statistic"].append(stat)
+                report_dict["df1"].append(desc1[stat])
+                report_dict["df2"].append(desc2[stat])
+                diff = abs(desc1[stat] - desc2[stat])
+                mean = (desc1[stat] + desc2[stat]) / 2
+                report_dict["diff%"].append(diff / mean * 100 if mean != 0 else 0)  # Fix for division by zero
+            nulls1 = df1[col].isnull().sum()
+            nulls2 = df2[col].isnull().sum()
+            outliers1 = df1[(df1[col] < desc1["25%"] - 1.5 * (desc1["75%"] - desc1["25%"])) | 
+                            (df1[col] > desc1["75%"] + 1.5 * (desc1["75%"] - desc1["25%"]))][col].count()
+            outliers2 = df2[(df2[col] < desc2["25%"] - 1.5 * (desc2["75%"] - desc2["25%"])) | 
+                            (df2[col] > desc2["75%"] + 1.5 * (desc2["75%"] - desc2["25%"]))][col].count()
+            for stat, value1, value2 in zip(statistics[-2:], [nulls1, outliers1], [nulls2, outliers2]):
+                report_dict["column"].append(col)
+                report_dict["statistic"].append(stat)
+                report_dict["df1"].append(value1)
+                report_dict["df2"].append(value2)
+                diff = abs(value1 - value2)
+                mean = (value1 + value2) / 2
+                report_dict["diff%"].append(diff / mean * 100 if mean != 0 else 0)  # Fix for division by zero
+
+    report_df = pd.DataFrame(report_dict)
+    report_df["significant"] = report_df["diff%"] > threshold * 100
+    report_df = report_df[report_df["significant"]]
+    report_df = report_df.round(2)
+
+    print(f"REPORT:\n{'-'*50}")
+    for col in report_df["column"].unique():
+        print(f"\n{'='*50}")
+        print(f"Column: {col}\n{'='*50}")
+        subset = report_df[report_df["column"]==col][["statistic", "df1", "df2", "diff%"]]
+        subset.index = subset["statistic"]
+        print(subset.to_string(header=True))
+
+    return report_df
