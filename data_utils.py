@@ -353,3 +353,37 @@ def generate_cluster_description_mixed(cluster_df, original_df=None, stats_list=
 
 
 
+def notion_db_as_df(database_id, token):
+  base_url = "https://api.notion.com/v1"
+
+  # Headers for API requests
+  headers = {
+      "Authorization": f"Bearer {token}",
+      "Notion-Version": "2022-06-28",
+      "Content-Type": "application/json"
+  }
+
+  response = requests.post(f"{base_url}/databases/{database_id}/query", headers=headers)
+  #response.raise_for_status()
+  pages = response.json().get('results', [])
+  print(response.json().keys())
+
+
+  # used to create df
+  table_data = {}
+  page_cnt = len(pages)
+  for i, page in enumerate(pages):
+    for curCol, val in page["properties"].items():
+      if curCol not in table_data:
+        table_data[curCol] = [None] * page_cnt
+      #cur_col = curCol
+      val_type = val["type"]
+      if val_type == "title":
+        value = val[val_type][0]["text"]["content"]
+      else:
+        value = val[val_type]
+      table_data[curCol][i] = value
+
+  # to dataframe
+  df = pd.DataFrame(table_data)
+  return df
