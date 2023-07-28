@@ -6,6 +6,9 @@ import os
 import csv
 import io
 import json
+import requests
+
+
 def helper():
     """
     Prints out the help message for this module.
@@ -21,8 +24,6 @@ def helper():
     print("colab_create_directory(base_name) -> create a directory with the given name, if it already exists, add a number to the end of the name, usefull for colab")
     print("colab_zip_download_folder(dir_name) -> zips and downloads a directory from colab. will only work in google colaboratory ")
 
-import numpy as np
-import pandas as pd
 
 def cleanData(data, mode="drop", num_only=False, print_report=True):
     """
