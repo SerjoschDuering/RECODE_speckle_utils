@@ -7,7 +7,11 @@ import csv
 import io
 import json
 import requests
-from fuzzywuzzy import fuzz
+
+try:
+    from fuzzywuzzy import fuzz
+except:
+    pass
 
 def helper():
     """
