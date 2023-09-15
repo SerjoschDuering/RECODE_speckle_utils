@@ -94,10 +94,15 @@ def getSpeckleStream(stream_id,
         choosen_commit_id = latest_commit.id
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("latest commit ", branch.commits.items[0].createdAt, " was choosen")
-    else:
+    elif type(commit_id) == type("s"): # string, commit uuid
         choosen_commit_id = commit_id
         commit = client.commit.get(stream_id, choosen_commit_id)
         print("provided commit ", choosen_commit_id, " was choosen")
+    elif type(commit_id) == type(1): #int 
+        latest_commit = branch.commits.items[commit_id]
+        choosen_commit_id = latest_commit.id
+        commit = client.commit.get(stream_id, choosen_commit_id)
+
 
     print(commit)
     print(commit.referencedObject)
