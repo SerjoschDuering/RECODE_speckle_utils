@@ -16,6 +16,8 @@ import numpy as np
 from pandas.api.types import is_numeric_dtype
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from sklearn.metrics import r2_score
+
 def cleanData(data, mode="drop", num_only=False):
     """
     This function cleans the input data based on the specified mode.
@@ -688,3 +690,125 @@ def gh_color_blueRed():
     # Scale RGB values to [0,1] range
     color_list = [[c/255. for c in color] for color in color_list]
     return color_list
+
+
+def linear_regression_with_residuals(
+    df, x_name, y_name, buffer=5, data_range_max=None, max_residual_color=None, rescale_range=None, generateName=False
+    ):
+
+    """
+    Generate a scatter plot with linear regression, residuals, and a color-coded line of equality.
+
+    Parameters:
+    df (DataFrame): The DataFrame containing the data.
+    x_name (str): The name of the x-axis variable.
+    y_name (str): The name of the y-axis variable.
+    buffer (int, optional): Buffer as a percentage of data range for plot margins. Default is 5.
+    data_range_max (float, optional): Maximum value for x and y axes. Default is None (auto-calculated).
+    max_residual_color (float, optional): Maximum residual value for color normalization. Default is None (auto-calculated).
+    rescale_range (tuple, optional): Rescale both x and y to the specified range. Default is None (no rescaling).
+    save_png (str, optional): File path to save the plot as a PNG image. Default is None (no saving).
+    date_source (str, optional): Date source identifier for the filename. Default is None.
+
+    Returns:
+    plt: Matplotlib figure for the generated plot.
+    """
+
+    # Extract x and y values from the DataFrame
+    x = df[x_name].values
+    y = df[y_name].values
+
+    # Rescale x and y if rescale_range is provided
+    if rescale_range:
+        x_min, x_max = rescale_range
+        x = (x - min(x)) / (max(x) - min(x)) * (x_max - x_min) + x_min
+        y = (y - min(y)) / (max(y) - min(y)) * (x_max - x_min) + x_min
+
+    # Calculate R2 score
+    r2 = r2_score(x, y)
+    print(f"R2 Score: {r2}")
+
+    # Calculate residuals in relation to the 45-degree line
+    residuals_45 = y - x.flatten()
+
+    # Calculate the data range with a buffer
+    if data_range_max:
+        data_min = 0
+        data_max = data_range_max
+    else:
+        data_min = min(min(x), min(y))
+        data_max = max(max(x), max(y))
+    buffer_value = (data_max - data_min) * (buffer / 100)
+
+    # Create a square plot with the same range for both axes
+    plt.figure()
+    colormap = 'bwr'  # Choose a colormap
+    cmap = plt.get_cmap(colormap)
+    plt.rcParams['font.family'] = 'DejaVu Sans'
+
+    # Shift the midpoint of the colormap to zero
+    if max_residual_color is None:
+        max_residual_color = max(abs(residuals_45))
+    norm = plt.Normalize(-max_residual_color, max_residual_color)
+
+    colors = np.array(cmap(norm(residuals_45)), dtype=object)
+
+    # Darken the edge color by making it 90% darker than the fill color
+    edge_colors = [tuple(0.9 * np.array(c)) for c in colors]
+
+    # Add a contour to scatter points with the same color as the point fill
+    scatter = plt.scatter(x, y, c=colors, label='True values', edgecolors=edge_colors, linewidths=2, zorder=3)
+
+    # Plot the line of equality (x == y)
+    combined_line = plt.plot([data_min - buffer_value, data_max + buffer_value], [data_min - buffer_value, data_max + buffer_value],
+             color='black', linewidth=1, zorder=5)
+
+    # Calculate and plot residuals in relation to the line of equality
+    for i in range(len(x)):
+        plt.plot([x[i], x[i]], [y[i], x[i]], color='gray', linestyle='--', linewidth=0.5, zorder=1)
+
+    # Plot the linear regression line
+    m, b = np.polyfit(x, y, 1)
+    regression_line = plt.plot(x, m * x + b, color='grey', linestyle='dotted', linewidth=1, label='Linear Regression line', zorder=4)
+
+    # Calculate the R2 score text position
+    text_x = data_min + 0.01 * (data_max - data_min)
+    text_y = data_max - 0.01 * (data_max - data_min)
+
+    # Annotate the plot with the R2 score
+    plt.text(text_x, text_y, f'$R^2$ Score: {r2:.2f}', fontsize=8, color='black')
+
+    # Add colorbar for residuals (smaller and within the plot)
+    sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=plt.gca(), shrink=0.2, aspect=15, pad=0.03)
+    cbar.set_label('Residuals (line of Equality)', fontsize=8)
+
+    # Create separate legend handles and labels
+    legend_handles = [scatter, regression_line[0], combined_line[0]]
+    legend_labels = ['True values', 'Linear Regression line', 'Line of Equality']
+
+    # Create the combined legend
+    combined_legend = plt.legend(handles=legend_handles, labels=legend_labels, loc='lower right', fontsize=8)
+
+    # Set the same limits for both x and y axes with a buffer
+    plt.xlim(data_min - buffer_value, data_max + buffer_value)
+    plt.ylim(data_min - buffer_value, data_max + buffer_value)
+
+    plt.gca().add_artist(combined_legend)  # Add the combined legend to the plot
+
+    plt.title('Linear Regression Visualization with Residuals (line of Equality)')
+    plt.xlabel(" ".join(x_name.split("+"))[0].capitalize() + " ".join(x_name.split("+"))[1:])
+    plt.ylabel(" ".join(y_name.split("+"))[0].capitalize() + " ".join(y_name.split("+"))[1:]
+
+    # Add very light grey background grid lines
+    plt.grid(True, color='lightgrey', linestyle='--', alpha=0.6, zorder=0)
+
+
+    if generateName:
+        # Plot name
+        plt_name = "linearRegr_" + "".join(word.capitalize() for word in x_name.split("+")) + "_vs_" + "".join(
+            word.capitalize() for word in y_name.split("+"))
+        return plt, plt_name
+    else:
+        return plt
