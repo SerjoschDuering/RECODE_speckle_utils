@@ -696,7 +696,7 @@ def gh_color_blueRed():
 
 
 def linear_regression_with_residuals(
-    df, x_name, y_name, buffer=5, data_range_max=None, max_residual_color=None, rescale_range=None, save_png=None, date_source=None
+    df, x_name, y_name, buffer=5, data_range_max=None, max_residual_color=None, rescale_range=None, generateName=False
     ):
 
     """
@@ -807,8 +807,11 @@ def linear_regression_with_residuals(
     # Add very light grey background grid lines
     plt.grid(True, color='lightgrey', linestyle='--', alpha=0.6, zorder=0)
 
-    #Plot name
-    plt_name = "linearRegr_" + "".join(word.capitalize() for word in x_name.split("+")) + "_vs_" + "".join(word.capitalize() for word in y_name.split("+"))
 
-
-    return plt, plt_name
+    if generateName:
+        # Plot name
+        plt_name = "linearRegr_" + "".join(word.capitalize() for word in x_name.split("+")) + "_vs_" + "".join(
+            word.capitalize() for word in y_name.split("+"))
+        return plt, plt_name
+    else:
+        return plt
