@@ -16,9 +16,6 @@ import numpy as np
 from pandas.api.types import is_numeric_dtype
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from datetime import datetime
-import pytz
-from google.colab import files
 from sklearn.metrics import r2_score
 
 def cleanData(data, mode="drop", num_only=False):
