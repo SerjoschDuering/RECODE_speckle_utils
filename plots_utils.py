@@ -807,22 +807,8 @@ def linear_regression_with_residuals(
     # Add very light grey background grid lines
     plt.grid(True, color='lightgrey', linestyle='--', alpha=0.6, zorder=0)
 
-    # Save the PNG plot
-    if save_png:
-        # Generate the file name with the time stamp
-        desired_timezone = pytz.timezone('Europe/Berlin')
-        # Get the current datetime in the desired time zone
-        datetime_now = datetime.now(desired_timezone).strftime('%d%m%y_%H-%M-%S')
-        if date_source:
-            analysis_name = date_source + "_"
-        else:
-            analysis_name = ""
-        analysis_name += "".join(word.capitalize() for word in x_name.split("+")) + "_vs_" + "".join(word.capitalize() for word in y_name.split("+"))
-        filename = "linearRegr_" + analysis_name + "_" + datetime_now + ".png"
-        # Save the figure with higher resolution
-        plt.savefig(filename, dpi=300)
-        files.download(filename)
+    #Plot name
+    plt_name = "linearRegr_" + "".join(word.capitalize() for word in x_name.split("+")) + "_vs_" + "".join(word.capitalize() for word in y_name.split("+"))
 
-    plt.show()
 
-    return plt
+    return plt, plt_name
