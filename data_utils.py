@@ -554,36 +554,48 @@ def compare_dataframes(df1, df2, threshold=0.1):
 
 
 def notion_db_as_df(database_id, token):
-  base_url = "https://api.notion.com/v1"
+    base_url = "https://api.notion.com/v1"
 
-  # Headers for API requests
-  headers = {
-      "Authorization": f"Bearer {token}",
-      "Notion-Version": "2022-06-28",
-      "Content-Type": "application/json"
-  }
+    # Headers for API requests
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json"
+    }
 
-  response = requests.post(f"{base_url}/databases/{database_id}/query", headers=headers)
-  #response.raise_for_status()
-  pages = response.json().get('results', [])
-  print(response.json().keys())
+    response = requests.post(f"{base_url}/databases/{database_id}/query", headers=headers)
+    # response.raise_for_status()  # Uncomment to raise an exception for HTTP errors
+    pages = response.json().get('results', [])
+    print(response.json().keys())
 
+    # Used to create df
+    table_data = {}
+    page_cnt = len(pages)
+    for i, page in enumerate(pages):
+        for cur_col, val in page["properties"].items():
+            if cur_col not in table_data:
+                table_data[cur_col] = [None] * page_cnt
+            val_type = val["type"]
+            if val_type == "title":
+                value = val[val_type][0]["text"]["content"]
+            elif val_type in ["number", "checkbox"]:
+                value = val[val_type]
+            elif val_type in ["select", "multi_select"]:
+                value = ', '.join([option["name"] for option in val[val_type]])
+            elif val_type == "date":
+                value = val[val_type]["start"]
+            elif val_type in ["people", "files"]:
+                value = ', '.join([item["id"] for item in val[val_type]])
+            elif val_type in ["url", "email", "phone_number"]:
+                value = val[val_type]
+            elif val_type == "formula":
+                value = val[val_type]["string"] if "string" in val[val_type] else val[val_type]["number"]
+            elif val_type == "rich_text":
+              value = val[val_type][0]["text"]["content"]
+            else:
+                value = str(val[val_type])  # Fallback to string representation
+            table_data[cur_col][i] = value
 
-  # used to create df
-  table_data = {}
-  page_cnt = len(pages)
-  for i, page in enumerate(pages):
-    for curCol, val in page["properties"].items():
-      if curCol not in table_data:
-        table_data[curCol] = [None] * page_cnt
-      #cur_col = curCol
-      val_type = val["type"]
-      if val_type == "title":
-        value = val[val_type][0]["text"]["content"]
-      else:
-        value = val[val_type]
-      table_data[curCol][i] = value
-
-  # to dataframe
-  df = pd.DataFrame(table_data)
-  return df
+    # To DataFrame
+    df = pd.DataFrame(table_data)
+    return df
