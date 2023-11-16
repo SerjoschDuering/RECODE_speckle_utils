@@ -799,7 +799,7 @@ def linear_regression_with_residuals(
 
     plt.title('Linear Regression Visualization with Residuals (line of Equality)')
     plt.xlabel(" ".join(x_name.split("+"))[0].capitalize() + " ".join(x_name.split("+"))[1:])
-    plt.ylabel(" ".join(y_name.split("+"))[0].capitalize() + " ".join(y_name.split("+"))[1:]
+    plt.ylabel(" ".join(y_name.split("+"))[0].capitalize() + " ".join(y_name.split("+"))[1:])
 
     # Add very light grey background grid lines
     plt.grid(True, color='lightgrey', linestyle='--', alpha=0.6, zorder=0)
