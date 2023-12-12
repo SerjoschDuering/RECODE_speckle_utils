@@ -102,25 +102,33 @@ def cleanData(data, mode="drop", num_only=False, print_report=True):
 def sort_and_match_df(A, B, uuid_column):
     """
     Sorts and matches DataFrame B to A based on a shared uuid_column.
+    Prioritizes uuid_column as an index if present, otherwise uses it as a column.
     
     Parameters:
     A, B (DataFrame): Input DataFrames to be sorted and matched.
-    uuid_column (str): Shared column for matching rows.
+    uuid_column (str): Shared column/index for matching rows.
     
     Returns:
     DataFrame: Resulting DataFrame after left join of A and B on uuid_column.
     """
-    merged_df = pd.merge(A, B, on=uuid_column, how='left')
-    return merged_df
+    if uuid_column in A.columns:
+        A = A.set_index(uuid_column, drop=False)
+    if uuid_column in B.columns:
+        B = B.set_index(uuid_column, drop=False)
+
+    merged_df = pd.merge(A, B, left_index=True, right_index=True, how='left')
+    return merged_df.reset_index(drop=False)
+
 
 def sort_and_match_dfs(dfs, uuid_column):
     """
     Sorts and matches all DataFrames in list based on a shared uuid_column.
+    Prioritizes uuid_column as an index if present, otherwise uses it as a column.
     Raises a warning if any two DataFrames have overlapping column names.
     
     Parameters:
     dfs (list): A list of DataFrames to be sorted and matched.
-    uuid_column (str): Shared column for matching rows.
+    uuid_column (str): Shared column/index for matching rows.
     
     Returns:
     DataFrame: Resulting DataFrame after successive left joins on uuid_column.
@@ -128,6 +136,11 @@ def sort_and_match_dfs(dfs, uuid_column):
     if not dfs:
         raise ValueError("The input list of DataFrames is empty")
     
+    # Convert uuid_column to index if it's a column
+    for i, df in enumerate(dfs):
+        if uuid_column in df.columns:
+            dfs[i] = df.set_index(uuid_column, drop=False)
+
     # Check for overlapping column names
     all_columns = [set(df.columns) for df in dfs]
     for i, columns_i in enumerate(all_columns):
@@ -136,10 +149,12 @@ def sort_and_match_dfs(dfs, uuid_column):
             if overlapping_columns:
                 print(f"Warning: DataFrames at indices {i} and {j} have overlapping column(s): {', '.join(overlapping_columns)}")
     
-    result_df = dfs[0]  # start with the first DataFrame
-    for df in dfs[1:]:  # then merge each remaining DataFrame one by one
-        result_df = pd.merge(result_df, df, on=uuid_column, how='left')
-    return result_df
+    result_df = dfs[0]
+    for df in dfs[1:]:
+        result_df = pd.merge(result_df, df, left_index=True, right_index=True, how='left')
+
+    return result_df.reset_index(drop=False)
+
 
 
 
