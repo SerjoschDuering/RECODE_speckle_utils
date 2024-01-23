@@ -315,6 +315,7 @@ def updateStreamAnalysis(
 
 
     # ======================== OPEN AI FUN ===========================
+    """
     try:
         try:
             answer_summary = gptCommitMessage(objects_raw, new_data,openai_key)
@@ -324,6 +325,8 @@ def updateStreamAnalysis(
             _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
     except:
         answer_summary = ""
+    """
+    answer_summary = ""
     # ================================================================
 
     new_objects_raw_speckle_id = operations.send(base=res_new, transports=[transport])
