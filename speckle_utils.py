@@ -270,7 +270,7 @@ def updateStreamAnalysis(
     The script requires active server connection, necessary permissions, and relies 
     on Speckle and OpenAI's GPT model libraries.
     """
-
+    print("1")
     if geometryGroupPath == None:
         geometryGroupPath = ["@Speckle", "Geometry"]
 
@@ -290,7 +290,7 @@ def updateStreamAnalysis(
     # get geometry objects (they carry the attributes)
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
     res_new = copy.deepcopy(res)
-
+    print("2")
     # map ids 
     id_mapper = {}
     if match_by_id != "":
@@ -299,7 +299,7 @@ def updateStreamAnalysis(
     else:
         for i, obj in enumerate(objects_raw):
             id_mapper[str(i)] = i
-
+    print("3")
     # iterate through rows (objects)
     for index, row in new_data.iterrows():
         #determin target object 
@@ -313,7 +313,7 @@ def updateStreamAnalysis(
         for col_name in new_data.columns:
             res_new[geometryGroupPath[0]][geometryGroupPath[1]][target_id][col_name] = row[col_name]
 
-
+    print("4")
     # ======================== OPEN AI FUN ===========================
     """
     try:
@@ -328,9 +328,9 @@ def updateStreamAnalysis(
     """
     answer_summary = ""
     # ================================================================
-
+    print("5")
     new_objects_raw_speckle_id = operations.send(base=res_new, transports=[transport])
-
+    print("6")
     # You can now create a commit on your stream with this object
     commit_id = client.commit.create(
         stream_id=stream_id,
@@ -338,7 +338,7 @@ def updateStreamAnalysis(
         object_id=new_objects_raw_speckle_id,
         message="Updated item in colab -" + answer_summary,
         )
-
+    print("7")
     print("Commit created!")
     if return_original:
         return objects_raw #as back-up
