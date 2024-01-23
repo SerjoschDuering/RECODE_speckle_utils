@@ -321,6 +321,7 @@ def updateStreamAnalysis(
             _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
     except:
         _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
+        
     # ================================================================
 
     new_objects_raw_speckle_id = operations.send(base=res_new, transports=[transport])
@@ -501,6 +502,8 @@ def gptCommitMessage(objects_raw, new_data,openai_key):
             answer_summery = summary
     except:
         answer_summery = summary
+
+    print(answer_summery)
     return answer_summery
 
 def specklePolyline_to_BokehPatches(speckle_objs, pth_to_geo="curves", id_key="ids"):
