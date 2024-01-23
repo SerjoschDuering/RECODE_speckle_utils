@@ -316,12 +316,14 @@ def updateStreamAnalysis(
 
     # ======================== OPEN AI FUN ===========================
     try:
-        answer_summary = gptCommitMessage(objects_raw, new_data,openai_key)
-        if answer_summary == None:
+        try:
+            answer_summary = gptCommitMessage(objects_raw, new_data,openai_key)
+            if answer_summary == None:
+                _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
+        except:
             _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
     except:
-        _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
-        
+        answer_summary = ""
     # ================================================================
 
     new_objects_raw_speckle_id = operations.send(base=res_new, transports=[transport])
