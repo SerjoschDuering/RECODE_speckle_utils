@@ -53,6 +53,38 @@ def helper():
 
 #==============================================================================
 
+def updateSpeckleStream(stream_id,
+                        branch_name,
+                        client,
+                        data_object,
+                        commit_message="Updated the data object",
+                        ):
+    """
+    Updates a speckle stream with a new data object.
+
+    Args:
+        stream_id (str): The ID of the speckle stream.
+        branch_name (str): The name of the branch within the speckle stream.
+        client (specklepy.api.client.Client): A speckle client.
+        data_object (dict): The data object to send to the speckle stream.
+        commit_message (str): The commit message. Defaults to "Updated the data object".
+    """
+    # set stream and branch
+    branch = client.branch.get(stream_id, branch_name)
+    # Get transport
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    # Send the data object to the speckle stream
+    object_id = operations.send(data_object, [transport])
+
+    # Create a new commit with the new object
+    commit_id = client.commit.create(
+        stream_id,
+        object_id= object_id,
+        message=commit_message,
+        branch_name=branch_name,
+    )
+
+    return commit_id
 def getSpeckleStream(stream_id,
                      branch_name,
                      client,
