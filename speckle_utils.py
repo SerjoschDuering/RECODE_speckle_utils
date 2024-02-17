@@ -375,6 +375,42 @@ def updateStreamAnalysis(
     if return_original:
         return objects_raw #as back-up
 
+
+def updateStreamAnalysisFast(client, new_data, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False):
+    if geometryGroupPath is None:
+        geometryGroupPath = ["@Speckle", "Geometry"]
+
+    branch = client.branch.get(stream_id, branch_name, 2)
+    latest_commit = branch.commits.items[0]
+    commit = client.commit.get(stream_id, latest_commit.id)
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    res = operations.receive(commit.referencedObject, transport)
+    objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
+
+    # Assuming objects_raw is a list of dictionaries
+    # Pre-create a mapping from IDs to objects for faster lookup
+    id_to_object_map = {obj[match_by_id]: obj for obj in objects_raw} if match_by_id else {i: obj for i, obj in enumerate(objects_raw)}
+
+    # Pre-process DataFrame if match_by_id is provided
+    if match_by_id:
+        new_data.set_index(match_by_id, inplace=True)
+
+    # Update objects in a more efficient way
+    for local_id, updates in new_data.iterrows():
+        target_object = id_to_object_map.get(str(local_id))
+        if target_object:
+            for col_name, value in updates.iteritems():
+                target_object[col_name] = value
+
+    # Send updated objects back to Speckle
+    new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
+    commit_id = client.commit.create(stream_id=stream_id, branch_name=branch_name, object_id=new_objects_raw_speckle_id, message="Updated item in colab")
+    print("commit created")
+    if return_original:
+        return objects_raw  # as back-up
+
+
+
 def custom_describe(df):
     # Convert columns to numeric if possible
     df = df.apply(lambda x: pd.to_numeric(x, errors='ignore'))
