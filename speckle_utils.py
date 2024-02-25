@@ -399,7 +399,7 @@ def updateStreamAnalysisFast(client, new_data, stream_id, branch_name, geometryG
     for local_id, updates in new_data.iterrows():
         target_object = id_to_object_map.get(str(local_id))
         if target_object:
-            for col_name, value in updates.iteritems():
+            for col_name, value in updates.items():
                 target_object[col_name] = value
 
     # Send updated objects back to Speckle
