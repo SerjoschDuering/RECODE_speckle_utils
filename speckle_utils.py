@@ -376,9 +376,16 @@ def updateStreamAnalysis(
         return objects_raw #as back-up
 
 
-def updateStreamAnalysisFast(client, new_data, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False):
+def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, fillna=True):
+    # requires uuid for matching
+    
     if geometryGroupPath is None:
         geometryGroupPath = ["@Speckle", "Geometry"]
+    new_data = new_data_in.copy()
+    
+    if fillna:
+      new_data = new_data.fillna("NA")
+
 
     branch = client.branch.get(stream_id, branch_name, 2)
     latest_commit = branch.commits.items[0]
@@ -387,20 +394,41 @@ def updateStreamAnalysisFast(client, new_data, stream_id, branch_name, geometryG
     res = operations.receive(commit.referencedObject, transport)
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
 
+    # turn objects_raw to dataframe 
+    objects_raw_df = speckle_utils.get_dataframe(objects_raw, return_original_df=False)
+    # extract uuids 
+    all_uuids = list(objects_raw_df[match_by_id].values)
+    
+    # unique columns
+    uniqu_cols = list(new_data.columns)
+    print(uniqu_cols)
+
+
     # Assuming objects_raw is a list of dictionaries
     # Pre-create a mapping from IDs to objects for faster lookup
     id_to_object_map = {obj[match_by_id]: obj for obj in objects_raw} if match_by_id else {i: obj for i, obj in enumerate(objects_raw)}
-
+   
+    print(len(id_to_object_map.keys()))
     # Pre-process DataFrame if match_by_id is provided
     if match_by_id:
         new_data.set_index(match_by_id, inplace=True)
 
-    # Update objects in a more efficient way
+     # First, update objects with available data from new_data
     for local_id, updates in new_data.iterrows():
         target_object = id_to_object_map.get(str(local_id))
         if target_object:
-            for col_name, value in updates.items():
+            for col_name in uniqu_cols:  # Iterate over all columns
+                value = updates.get(col_name, "NA")  # Fetch update or default to "NA"
                 target_object[col_name] = value
+
+    
+    # Now, ensure all objects have all columns, adding "NA" where data is missing
+    for obj_id, obj in id_to_object_map.items():
+        # Check for each unique column in the object
+        
+        for col_name in uniqu_cols:
+          if col_name not in obj.__dict__.keys():
+              obj[col_name] = "NA"  # Add "NA" if the column is missing
 
     # Send updated objects back to Speckle
     new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
