@@ -376,11 +376,34 @@ def updateStreamAnalysis(
         return objects_raw #as back-up
 
 
-def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, fillna=True):
-    # requires uuid for matching
+def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, fillna=True, commit_id=None):
+    """
+    Updates data on a Speckle stream by matching and synchronizing new data inputs with existing data objects within a specified stream and branch. 
+    This function is designed to be efficient in processing and updating large datasets by leveraging data frame operations and direct data manipulation.
+
+    Parameters:
+    - client: SpeckleClient object, used to interact with the Speckle server.
+    - new_data_in (DataFrame): The new data to be updated on the stream. Must include a column for matching with existing data objects if `match_by_id` is specified.
+    - stream_id (str): The unique identifier of the Speckle stream to be updated.
+    - branch_name (str): The name of the branch within the stream where the data update is to take place.
+    - geometryGroupPath (list of str, optional): The path to the geometry group within the Speckle data structure. Defaults to ["@Speckle", "Geometry"] if not provided.
+    - match_by_id (str, optional): The column name in `new_data_in` used to match data points with existing objects in the Speckle stream. Defaults to an empty string, which implies no matching by ID.
+    - return_original (bool, optional): If True, returns the original data objects from the Speckle stream as a backup. Defaults to False.
+    - fillna (bool, optional): If True, fills missing values in `new_data_in` with "NA" before updating. Defaults to True.
+    - commit_id (str, optional): The commit ID to use for fetching the existing data. If not provided, the latest commit on the specified branch is used.
+
+    Returns:
+    - If `return_original` is True, returns the original data objects from the Speckle stream as a list or DataFrame. Otherwise, returns None.
+
+    Requires:
+    - The `new_data_in` DataFrame must contain a column with the name provided in `match_by_id` (if specified) for matching data points with existing data points on the Speckle stream.
+    - A valid SpeckleClient object authenticated and connected to the desired Speckle server.
+
+    """
     
     if geometryGroupPath is None:
         geometryGroupPath = ["@Speckle", "Geometry"]
+    
     new_data = new_data_in.copy()
     
     if fillna:
@@ -389,7 +412,11 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
 
     branch = client.branch.get(stream_id, branch_name, 2)
     latest_commit = branch.commits.items[0]
-    commit = client.commit.get(stream_id, latest_commit.id)
+
+    if commit_id == None:
+        commit = client.commit.get(stream_id, latest_commit.id)
+    else:
+        commit = client.commit.get(stream_id, commit_id)
     transport = ServerTransport(client=client, stream_id=stream_id)
     res = operations.receive(commit.referencedObject, transport)
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
@@ -408,7 +435,6 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
     # Pre-create a mapping from IDs to objects for faster lookup
     id_to_object_map = {obj[match_by_id]: obj for obj in objects_raw} if match_by_id else {i: obj for i, obj in enumerate(objects_raw)}
    
-    print(len(id_to_object_map.keys()))
     # Pre-process DataFrame if match_by_id is provided
     if match_by_id:
         new_data.set_index(match_by_id, inplace=True)
