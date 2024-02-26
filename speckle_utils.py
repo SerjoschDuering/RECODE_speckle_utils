@@ -376,7 +376,7 @@ def updateStreamAnalysis(
         return objects_raw #as back-up
 
 
-def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, fillna=True, commit_id=None):
+def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, commit_id=None):
     """
     Updates data on a Speckle stream by matching and synchronizing new data inputs with existing data objects within a specified stream and branch. 
     This function is designed to be efficient in processing and updating large datasets by leveraging data frame operations and direct data manipulation.
@@ -389,7 +389,6 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
     - geometryGroupPath (list of str, optional): The path to the geometry group within the Speckle data structure. Defaults to ["@Speckle", "Geometry"] if not provided.
     - match_by_id (str, optional): The column name in `new_data_in` used to match data points with existing objects in the Speckle stream. Defaults to an empty string, which implies no matching by ID.
     - return_original (bool, optional): If True, returns the original data objects from the Speckle stream as a backup. Defaults to False.
-    - fillna (bool, optional): If True, fills missing values in `new_data_in` with "NA" before updating. Defaults to True.
     - commit_id (str, optional): The commit ID to use for fetching the existing data. If not provided, the latest commit on the specified branch is used.
 
     Returns:
@@ -405,9 +404,6 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
         geometryGroupPath = ["@Speckle", "Geometry"]
     
     new_data = new_data_in.copy()
-    
-    if fillna:
-      new_data = new_data.fillna("NA")
 
 
     branch = client.branch.get(stream_id, branch_name, 2)
@@ -456,9 +452,12 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
           if col_name not in obj.__dict__.keys():
               obj[col_name] = "NA"  # Add "NA" if the column is missing
 
+    print("uuid column check")
+    [print(obj.__dict__[match_by_id]) for obj in objects_raw]
     # Send updated objects back to Speckle
     new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
     commit_id = client.commit.create(stream_id=stream_id, branch_name=branch_name, object_id=new_objects_raw_speckle_id, message="Updated item in colab")
+       
     print("commit created")
     if return_original:
         return objects_raw  # as back-up
