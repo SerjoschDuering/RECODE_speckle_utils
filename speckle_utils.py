@@ -422,7 +422,7 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
 
     # turn objects_raw to dataframe 
-    objects_raw_df = speckle_utils.get_dataframe(objects_raw, return_original_df=False)
+    objects_raw_df = get_dataframe(objects_raw, return_original_df=False)
     # extract uuids 
     all_uuids = list(objects_raw_df[match_by_id].values)
     
