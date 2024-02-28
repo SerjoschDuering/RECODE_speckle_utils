@@ -402,38 +402,28 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
     
     if geometryGroupPath is None:
         geometryGroupPath = ["@Speckle", "Geometry"]
-    
     new_data = new_data_in.copy()
 
 
     branch = client.branch.get(stream_id, branch_name, 2)
     latest_commit = branch.commits.items[0]
-
-    if commit_id == None:
-        commit = client.commit.get(stream_id, latest_commit.id)
-    else:
-        commit = client.commit.get(stream_id, commit_id)
+    print(latest_commit)
+    commit = client.commit.get(stream_id, latest_commit.id)
     transport = ServerTransport(client=client, stream_id=stream_id)
     res = operations.receive(commit.referencedObject, transport)
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
 
-    # turn objects_raw to dataframe 
-    objects_raw_df = get_dataframe(objects_raw, return_original_df=False)
-    # extract uuids 
-    all_uuids = list(objects_raw_df[match_by_id].values)
-    
     # unique columns
     uniqu_cols = list(new_data.columns)
-    print(uniqu_cols)
+    print("uniqu_cols", uniqu_cols)
 
 
-    # Assuming objects_raw is a list of dictionaries
     # Pre-create a mapping from IDs to objects for faster lookup
     id_to_object_map = {obj[match_by_id]: obj for obj in objects_raw} if match_by_id else {i: obj for i, obj in enumerate(objects_raw)}
-   
+
     # Pre-process DataFrame if match_by_id is provided
     if match_by_id:
-        new_data.set_index(match_by_id, inplace=True)
+        new_data.set_index(match_by_id, inplace=True, drop=False)
 
      # First, update objects with available data from new_data
     for local_id, updates in new_data.iterrows():
@@ -443,24 +433,26 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
                 value = updates.get(col_name, "NA")  # Fetch update or default to "NA"
                 target_object[col_name] = value
 
-    
+
     # Now, ensure all objects have all columns, adding "NA" where data is missing
     for obj_id, obj in id_to_object_map.items():
         # Check for each unique column in the object
-        
+
         for col_name in uniqu_cols:
           if col_name not in obj.__dict__.keys():
               obj[col_name] = "NA"  # Add "NA" if the column is missing
 
-    print("uuid column check")
-    [print(obj.__dict__[match_by_id]) for obj in objects_raw]
+    toPrint = [obj.__dict__[match_by_id] for obj in objects_raw]
+    print("uuids:", toPrint)
+    if "NA" in obj.__dict__[match_by_id]:
+      print("!!!!! UUIDS not found anymore - abort commit !!!!!")
+      return "fail"
     # Send updated objects back to Speckle
     new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
     commit_id = client.commit.create(stream_id=stream_id, branch_name=branch_name, object_id=new_objects_raw_speckle_id, message="Updated item in colab")
-       
     print("commit created")
     if return_original:
-        return objects_raw  # as back-up
+        return objects_raw  
 
 
 
