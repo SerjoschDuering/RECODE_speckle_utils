@@ -78,6 +78,98 @@ def cleanData(data, mode="drop", num_only=False):
 
     return data
 
+
+
+def create_3d_plot(other_data,  coordinates_df="ActivityNode"):
+    """
+    Generates a 3D scatter plot combining coordinate and additional data, with interactive coloring and sizing options.
+
+    Parameters:
+    - other_data (pd.DataFrame): Data for visualization, with indices matching `coordinates_df` if provided, 
+      or used to generate coordinates from "ActivityNode" format.
+    - coordinates_df (pd.DataFrame or str, optional): DataFrame with 'x', 'y', 'z' coordinates, or "ActivityNode" 
+      indicating coordinates should be parsed from `other_data` index. Defaults to "ActivityNode".
+
+    Returns:
+    - None: Displays the plot directly.
+
+    Notes:
+    - Adjusts the aspect ratio to match data proportions.
+    - Supports dynamic coloring based on data columns, with dropdown menus for column selection if multiple are present.
+
+    Example:
+    >>> create_3d_plot(df_activities)
+    Creates a 3D scatter plot from `df_activities`, using its index for coordinates if set to "ActivityNode".
+    """
+
+    if coordinates_df =="ActivityNode":
+      coordinates = [[int(vv) for vv in v.split(";")] for v in other_data.index]
+      coordinates_df = pd.DataFrame(coordinates, columns=['x', 'y', 'z'], index=other_data.index)
+
+    # Merge the DataFrames based on index
+    merged_df = coordinates_df.join(other_data)
+    
+
+    # Attempt to convert all other_data columns to numeric, keeping track of NaNs
+    for col in merged_df.columns:
+        merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
+
+    # Determine the aspect ratio based on the ranges of x, y, z coordinates
+    x_range = merged_df['x'].max() - merged_df['x'].min()
+    y_range = merged_df['y'].max() - merged_df['y'].min()
+    z_range = merged_df['z'].max() - merged_df['z'].min()
+    max_range = np.array([x_range, y_range, z_range]).max()
+    aspect_ratio = dict(x=x_range/max_range, y=y_range/max_range, z=z_range/max_range)
+    
+    # Setup the plot
+    fig = make_subplots(rows=1, cols=1, specs=[[{'type': 'scatter3d'}]])
+    
+    # Determine columns for coloring, excluding 'x', 'y', 'z'
+    columns_to_color = [col for col in merged_df.columns if col not in ['x', 'y', 'z']]
+    
+    buttons = []
+    # Assuming there's at least one column to color
+    if columns_to_color:
+        initial_col = columns_to_color[0]
+        for col in columns_to_color:
+            valid_vals = pd.to_numeric(merged_df[col], errors='coerce')
+            sizes = valid_vals.apply(lambda x: 0.1 if pd.isna(x) else 10)
+            # Create a button for each column, specifying the 'jet' colorscale
+            buttons.append(dict(method='update',
+                                label=col,
+                                args=[{'marker.size': [sizes.tolist()],
+                                       'marker.color': [valid_vals.tolist()],
+                                       'marker.colorscale': 'jet',
+                                       'marker.cmin': valid_vals.min(),
+                                       'marker.cmax': valid_vals.max(),
+                                       'marker.showscale': True,
+                                       'marker.colorbar.title': col}]))
+        
+        # Add dropdown menus for selecting coloring column
+        fig.update_layout(updatemenus=[dict(buttons=buttons,
+                                            direction="down",
+                                            pad={"r": 10, "t": 10},
+                                            showactive=True,
+                                            x=0.1,
+                                            xanchor="left",
+                                            y=1.1,
+                                            yanchor="top")])
+
+        # Add the initial trace
+        sizes = pd.to_numeric(merged_df[initial_col], errors='coerce').apply(lambda x: 0.1 if pd.isna(x) else 10)
+        valid_vals = pd.to_numeric(merged_df[initial_col], errors='coerce')
+        fig.add_trace(go.Scatter3d(x=merged_df['x'], y=merged_df['y'], z=merged_df['z'],
+                                   mode='markers',
+                                   marker=dict(size=sizes, color=valid_vals, colorscale='jet', 
+                                               cmin=valid_vals.min(), cmax=valid_vals.max(), showscale=True,
+                                               colorbar={'title': initial_col})))
+    
+    # Adjust the aspect ratio to match the data
+    fig.update_layout(scene=dict(aspectmode='manual', aspectratio=aspect_ratio),
+                      title="3D Plot", autosize=False, width=1200, height=600,
+                      margin=dict(l=0, r=0, b=0, t=30))
+    fig.show()
+
 def boxPlot(inp_data, columName, cull_invalid=True):
   """
     This function generates a boxplot for a given set of data.
