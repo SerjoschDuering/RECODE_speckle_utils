@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as colors
