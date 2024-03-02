@@ -83,96 +83,168 @@ def cleanData(data, mode="drop", num_only=False):
 
 
 
-def create_3d_plot(other_data,  coordinates_df="ActivityNode"):
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
+import numpy as np
+
+def create_3d(other_data, coordinates_df="ActivityNode"):
     """
-    Generates a 3D scatter plot combining coordinate and additional data, with interactive coloring and sizing options.
+    Generates a Plotly figure with a 3D scatter plot and a 2D rank-value plot side by side.
+
+    This function creates a figure containing a 3D scatter plot and a 2D rank-value plot
+    in a subplot layout. It is designed to visualize the spatial distribution of data points
+    in 3D space alongside their corresponding rank-value distribution in 2D. The function
+    allows for dynamic visualization adjustments through a set of dropdown menus that control
+    the coloring and sizing of the data points based on different data columns.
 
     Parameters:
-    - other_data (pd.DataFrame): Data for visualization, with indices matching `coordinates_df` if provided, 
-      or used to generate coordinates from "ActivityNode" format.
-    - coordinates_df (pd.DataFrame or str, optional): DataFrame with 'x', 'y', 'z' coordinates, or "ActivityNode" 
-      indicating coordinates should be parsed from `other_data` index. Defaults to "ActivityNode".
+    - other_data (pd.DataFrame): A DataFrame containing the data to be visualized. 
+      Each row represents a data point with its attributes.
+    - coordinates_df (str, optional): Specifies the source of coordinates for the 3D scatter plot.
+      If set to "ActivityNode", the function expects `other_data`'s index to contain coordinate
+      information in a specific format. Otherwise, it should be a DataFrame directly providing
+      'x', 'y', 'z' coordinates. Defaults to "ActivityNode".
+
+    The function processes the input data, computes the necessary visual attributes (e.g., color,
+    size), and constructs the interactive figure with customization options. Hover text for the 3D plot
+    is dynamically updated to display values used for coloring instead of default x, y, z coordinates.
 
     Returns:
-    - None: Displays the plot directly.
-
-    Notes:
-    - Adjusts the aspect ratio to match data proportions.
-    - Supports dynamic coloring based on data columns, with dropdown menus for column selection if multiple are present.
-
-    Example:
-    >>> create_3d_plot(df_activities)
-    Creates a 3D scatter plot from `df_activities`, using its index for coordinates if set to "ActivityNode".
+    - A Plotly figure containing the configured 3D scatter plot and 2D rank-value plot as subplots.
     """
-
-    if coordinates_df =="ActivityNode":
-      coordinates = [[int(vv) for vv in v.split(";")] for v in other_data.index]
-      coordinates_df = pd.DataFrame(coordinates, columns=['x', 'y', 'z'], index=other_data.index)
+    
+    if coordinates_df == "ActivityNode":
+        coordinates = [[int(vv) for vv in v.split(";")] for v in other_data.index]
+        coordinates_df = pd.DataFrame(coordinates, columns=['x', 'y', 'z'], index=other_data.index)
 
     # Merge the DataFrames based on index
     merged_df = coordinates_df.join(other_data)
-    
 
-    # Attempt to convert all other_data columns to numeric, keeping track of NaNs
+    # Convert all other_data columns to numeric, keeping track of NaNs
     for col in merged_df.columns:
         merged_df[col] = pd.to_numeric(merged_df[col], errors='coerce')
 
-    # Determine the aspect ratio based on the ranges of x, y, z coordinates
+    # Determine the aspect ratio for the 3D plot
     x_range = merged_df['x'].max() - merged_df['x'].min()
     y_range = merged_df['y'].max() - merged_df['y'].min()
     z_range = merged_df['z'].max() - merged_df['z'].min()
     max_range = np.array([x_range, y_range, z_range]).max()
     aspect_ratio = dict(x=x_range/max_range, y=y_range/max_range, z=z_range/max_range)
-    
-    # Setup the plot
-    fig = make_subplots(rows=1, cols=1, specs=[[{'type': 'scatter3d'}]])
-    
+
+    # Create subplots: 1 row, 2 columns
+    fig = make_subplots(rows=1, cols=2, column_widths=[0.7, 0.3], specs=[[{'type': 'scatter3d'}, {'type': 'scatter'}]],
+                        subplot_titles=("3D Plot", "Rank-Value Plot"))
+
+
     # Determine columns for coloring, excluding 'x', 'y', 'z'
     columns_to_color = [col for col in merged_df.columns if col not in ['x', 'y', 'z']]
-    
     buttons = []
-    # Assuming there's at least one column to color
+
     if columns_to_color:
         initial_col = columns_to_color[0]
+        
+        # Processing for initial setup
+        numeric_vals_initial = pd.to_numeric(merged_df[initial_col], errors='coerce')
+        default_color_value_initial = numeric_vals_initial.min() - (numeric_vals_initial.max() - numeric_vals_initial.min())
+        colors_initial = numeric_vals_initial.fillna(default_color_value_initial).tolist()
+        sizes_initial = numeric_vals_initial.apply(lambda x: 5 if pd.isnull(x) else 10).tolist()
+        
+        # Add the initial trace for 3D scatter plot----------
+        fig.add_trace(go.Scatter3d(
+          x=merged_df['x'], y=merged_df['y'], z=merged_df['z'],
+          mode='markers',
+          marker=dict(size=sizes_initial, color=colors_initial, colorscale='Jet',
+                      cmin=numeric_vals_initial.min(), cmax=numeric_vals_initial.max(), showscale=True),
+          hoverinfo='text',  # Use 'text' for hoverinfo to display custom hover text
+          text=[f'Value: {val:.2f}' for val in numeric_vals_initial],  # Custom hover text for each point
+          hovertemplate='%{text}<extra></extra>',  # Custom hover template to display text
+      ))
+        
+        # Correcting the rank-value plot setup
+        ranks_2d = np.arange(1, len(merged_df) + 1)  # Generating ranks from 1 to n (number of data points)
+        valid_vals_2d = numeric_vals_initial.fillna(numeric_vals_initial.min() - (numeric_vals_initial.max() - numeric_vals_initial.min()))
+        sorted_vals_2d = valid_vals_2d.sort_values().values
+        
+        # Add the initial trace for 2D rank-value plot
+        fig.add_trace(go.Scatter(
+            x=ranks_2d, y=sorted_vals_2d,
+            mode='markers',
+            marker=dict(color=sorted_vals_2d, colorscale='Jet', size=8,
+                        cmin=sorted_vals_2d.min(), cmax=sorted_vals_2d.max(), showscale=False,
+                        line=dict(width=0.3, color='rgba(0, 0, 0, 0.1)'),
+                        )),
+            row=1, col=2)
+
         for col in columns_to_color:
-            valid_vals = pd.to_numeric(merged_df[col], errors='coerce')
-            sizes = valid_vals.apply(lambda x: 0.1 if pd.isna(x) else 10)
-            # Create a button for each column, specifying the 'jet' colorscale
+
+
+
+            numeric_vals = pd.to_numeric(merged_df[col], errors='coerce')
+            default_color_value = numeric_vals.min() - (numeric_vals.max() - numeric_vals.min())
+            colors = numeric_vals.fillna(default_color_value).tolist()
+            sizes = numeric_vals.apply(lambda x: 1.5 if pd.isnull(x) else 10).tolist()
+
+            # Dynamically calculate cmin and cmax for the current column
+            cmin_ = numeric_vals.min()
+            cmax_ = numeric_vals.max()
+
+
+            # Calculate for 2D rank-value plot
+            ranks_2d = np.arange(1, len(merged_df) + 1)  # Generating ranks from 1 to n (number of data points)
+            valid_vals_2d = numeric_vals.fillna(numeric_vals.min() - (numeric_vals.max() - numeric_vals.min()))
+            sorted_vals_2d = valid_vals_2d.sort_values().values
+
+
+            hover_text = [f'Value: {round(val,2)}' for val in colors]
+            hover_text_rv = [f'Value: {val:.2f}' for val in sorted_vals_2d]
+
+            
+            # Update logic for buttons (simplified for clarity)
             buttons.append(dict(method='update',
                                 label=col,
-                                args=[{'marker.size': [sizes.tolist()],
-                                       'marker.color': [valid_vals.tolist()],
-                                       'marker.colorscale': 'jet',
-                                       'marker.cmin': valid_vals.min(),
-                                       'marker.cmax': valid_vals.max(),
-                                       'marker.showscale': True,
-                                       'marker.colorbar.title': col}]))
-        
-        # Add dropdown menus for selecting coloring column
-        fig.update_layout(updatemenus=[dict(buttons=buttons,
-                                            direction="down",
-                                            pad={"r": 10, "t": 10},
-                                            showactive=True,
-                                            x=0.1,
-                                            xanchor="left",
-                                            y=1.1,
-                                            yanchor="top")])
+                                args=[{'marker.size': [sizes, [8] * len(ranks_2d)],
+                                       'marker.color': [colors, sorted_vals_2d],
+                                       'marker.colorscale': ['Jet', 'Jet'],
+                                       'marker.cmin': [cmin_, cmin_],  # Set cmin for both plots
+                                       'marker.cmax': [cmax_, cmax_],
+                                       'text': [hover_text, hover_text_rv],  # Update hover text for 3D plot
+                                       
+                                       'x': [merged_df['x'], ranks_2d],
+                                       'y': [merged_df['y'], sorted_vals_2d],
+                                       'z': [merged_df['z'], []]}, [0, 1]]  # Apply updates to both the 3D and 2D plots
+                                ))
 
-        # Add the initial trace
-        sizes = pd.to_numeric(merged_df[initial_col], errors='coerce').apply(lambda x: 0.1 if pd.isna(x) else 10)
-        valid_vals = pd.to_numeric(merged_df[initial_col], errors='coerce')
-        fig.add_trace(go.Scatter3d(x=merged_df['x'], y=merged_df['y'], z=merged_df['z'],
-                                   mode='markers',
-                                   marker=dict(size=sizes, color=valid_vals, colorscale='jet', 
-                                               cmin=valid_vals.min(), cmax=valid_vals.max(), showscale=True,
-                                               colorbar={'title': initial_col})))
-    
+    # Add dropdown menus for selecting coloring column
+    fig.update_layout(updatemenus=[dict(buttons=buttons,
+                                        direction="down",
+                                        pad={"r": 10, "t": 10},
+                                        showactive=True,
+                                        x=0.01,
+                                        xanchor="left",
+                                        y=1.065,
+                                        yanchor="top")])
+
     # Adjust the aspect ratio to match the data
     fig.update_layout(scene=dict(aspectmode='manual', aspectratio=aspect_ratio),
-                      title="3D Plot", autosize=False, width=1200, height=600,
+                      title="", 
+                      autosize=False, 
+                      width=1200, height=600,
                       margin=dict(l=0, r=0, b=0, t=30))
+    fig.update_layout(
+    plot_bgcolor='rgba(242, 242, 242, 1)',  # Light grey background
+    paper_bgcolor='rgba(242, 242, 242, 1)',
+    scene=dict(  # This applies to the 3D plot
+        xaxis=dict(showbackground=False, gridcolor='lightgrey',showticklabels=False, ticks='', showline=False, title="", showgrid=False),
+        yaxis=dict(showbackground=False, gridcolor='lightgrey',showticklabels=False, ticks='', showline=False,title="", showgrid=False),
+        zaxis=dict(showbackground=True, gridcolor='lightgrey', showticklabels=False, ticks='', showline=False, title="", showgrid=False),  # Hide Z-axis ticks and line
+    ),
+    xaxis=dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),  # This applies to the 2D plot
+    yaxis=dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),
+    )
+    
+   
     fig.show()
-
 def boxPlot(inp_data, columName, cull_invalid=True):
   """
     This function generates a boxplot for a given set of data.
