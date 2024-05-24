@@ -53,6 +53,38 @@ def helper():
 
 #==============================================================================
 
+def updateSpeckleStream(stream_id,
+                        branch_name,
+                        client,
+                        data_object,
+                        commit_message="Updated the data object",
+                        ):
+    """
+    Updates a speckle stream with a new data object.
+
+    Args:
+        stream_id (str): The ID of the speckle stream.
+        branch_name (str): The name of the branch within the speckle stream.
+        client (specklepy.api.client.Client): A speckle client.
+        data_object (dict): The data object to send to the speckle stream.
+        commit_message (str): The commit message. Defaults to "Updated the data object".
+    """
+    # set stream and branch
+    branch = client.branch.get(stream_id, branch_name)
+    # Get transport
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    # Send the data object to the speckle stream
+    object_id = operations.send(data_object, [transport])
+
+    # Create a new commit with the new object
+    commit_id = client.commit.create(
+        stream_id,
+        object_id= object_id,
+        message=commit_message,
+        branch_name=branch_name,
+    )
+
+    return commit_id
 def getSpeckleStream(stream_id,
                      branch_name,
                      client,
@@ -270,7 +302,7 @@ def updateStreamAnalysis(
     The script requires active server connection, necessary permissions, and relies 
     on Speckle and OpenAI's GPT model libraries.
     """
-
+    print("1")
     if geometryGroupPath == None:
         geometryGroupPath = ["@Speckle", "Geometry"]
 
@@ -290,7 +322,7 @@ def updateStreamAnalysis(
     # get geometry objects (they carry the attributes)
     objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
     res_new = copy.deepcopy(res)
-
+    print("2")
     # map ids 
     id_mapper = {}
     if match_by_id != "":
@@ -299,7 +331,7 @@ def updateStreamAnalysis(
     else:
         for i, obj in enumerate(objects_raw):
             id_mapper[str(i)] = i
-
+    print("3")
     # iterate through rows (objects)
     for index, row in new_data.iterrows():
         #determin target object 
@@ -313,18 +345,24 @@ def updateStreamAnalysis(
         for col_name in new_data.columns:
             res_new[geometryGroupPath[0]][geometryGroupPath[1]][target_id][col_name] = row[col_name]
 
-
+    print("4")
     # ======================== OPEN AI FUN ===========================
+    """
     try:
-        answer_summary = gptCommitMessage(objects_raw, new_data,openai_key)
-        if answer_summary == None:
+        try:
+            answer_summary = gptCommitMessage(objects_raw, new_data,openai_key)
+            if answer_summary == None:
+                _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
+        except:
             _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
     except:
-        _, answer_summary = compareStats(get_dataframe(objects_raw),new_data)
+        answer_summary = ""
+    """
+    answer_summary = ""
     # ================================================================
-
+    print("5")
     new_objects_raw_speckle_id = operations.send(base=res_new, transports=[transport])
-
+    print("6")
     # You can now create a commit on your stream with this object
     commit_id = client.commit.create(
         stream_id=stream_id,
@@ -332,10 +370,91 @@ def updateStreamAnalysis(
         object_id=new_objects_raw_speckle_id,
         message="Updated item in colab -" + answer_summary,
         )
-
+    print("7")
     print("Commit created!")
     if return_original:
         return objects_raw #as back-up
+
+
+def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, commit_id=None):
+    """
+    Updates data on a Speckle stream by matching and synchronizing new data inputs with existing data objects within a specified stream and branch. 
+    This function is designed to be efficient in processing and updating large datasets by leveraging data frame operations and direct data manipulation.
+
+    Parameters:
+    - client: SpeckleClient object, used to interact with the Speckle server.
+    - new_data_in (DataFrame): The new data to be updated on the stream. Must include a column for matching with existing data objects if `match_by_id` is specified.
+    - stream_id (str): The unique identifier of the Speckle stream to be updated.
+    - branch_name (str): The name of the branch within the stream where the data update is to take place.
+    - geometryGroupPath (list of str, optional): The path to the geometry group within the Speckle data structure. Defaults to ["@Speckle", "Geometry"] if not provided.
+    - match_by_id (str, optional): The column name in `new_data_in` used to match data points with existing objects in the Speckle stream. Defaults to an empty string, which implies no matching by ID.
+    - return_original (bool, optional): If True, returns the original data objects from the Speckle stream as a backup. Defaults to False.
+    - commit_id (str, optional): The commit ID to use for fetching the existing data. If not provided, the latest commit on the specified branch is used.
+
+    Returns:
+    - If `return_original` is True, returns the original data objects from the Speckle stream as a list or DataFrame. Otherwise, returns None.
+
+    Requires:
+    - The `new_data_in` DataFrame must contain a column with the name provided in `match_by_id` (if specified) for matching data points with existing data points on the Speckle stream.
+    - A valid SpeckleClient object authenticated and connected to the desired Speckle server.
+
+    """
+    
+    if geometryGroupPath is None:
+        geometryGroupPath = ["@Speckle", "Geometry"]
+    new_data = new_data_in.copy()
+
+
+    branch = client.branch.get(stream_id, branch_name, 2)
+    latest_commit = branch.commits.items[0]
+    print(latest_commit)
+    commit = client.commit.get(stream_id, latest_commit.id)
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    res = operations.receive(commit.referencedObject, transport)
+    objects_raw = res[geometryGroupPath[0]][geometryGroupPath[1]]
+
+    # unique columns
+    uniqu_cols = list(new_data.columns)
+    print("uniqu_cols", uniqu_cols)
+
+
+    # Pre-create a mapping from IDs to objects for faster lookup
+    id_to_object_map = {obj[match_by_id]: obj for obj in objects_raw} if match_by_id else {i: obj for i, obj in enumerate(objects_raw)}
+
+    # Pre-process DataFrame if match_by_id is provided
+    if match_by_id:
+        new_data.set_index(match_by_id, inplace=True, drop=False)
+
+     # First, update objects with available data from new_data
+    for local_id, updates in new_data.iterrows():
+        target_object = id_to_object_map.get(str(local_id))
+        if target_object:
+            for col_name in uniqu_cols:  # Iterate over all columns
+                value = updates.get(col_name, "NA")  # Fetch update or default to "NA"
+                target_object[col_name] = value
+
+
+    # Now, ensure all objects have all columns, adding "NA" where data is missing
+    for obj_id, obj in id_to_object_map.items():
+        # Check for each unique column in the object
+
+        for col_name in uniqu_cols:
+          if col_name not in obj.__dict__.keys():
+              obj[col_name] = "NA"  # Add "NA" if the column is missing
+
+    toPrint = [obj.__dict__[match_by_id] for obj in objects_raw]
+    print("uuids:", toPrint)
+    if "NA" in obj.__dict__[match_by_id]:
+      print("!!!!! UUIDS not found anymore - abort commit !!!!!")
+      return "fail"
+    # Send updated objects back to Speckle
+    new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
+    commit_id = client.commit.create(stream_id=stream_id, branch_name=branch_name, object_id=new_objects_raw_speckle_id, message="Updated item in colab")
+    print("commit created")
+    if return_original:
+        return objects_raw  
+
+
 
 def custom_describe(df):
     # Convert columns to numeric if possible
@@ -501,6 +620,8 @@ def gptCommitMessage(objects_raw, new_data,openai_key):
             answer_summery = summary
     except:
         answer_summery = summary
+
+    print(answer_summery)
     return answer_summery
 
 def specklePolyline_to_BokehPatches(speckle_objs, pth_to_geo="curves", id_key="ids"):
