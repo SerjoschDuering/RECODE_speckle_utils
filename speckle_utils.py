@@ -2,14 +2,25 @@
 import json 
 import pandas as pd
 import numpy as np
+import numpy as np
+from numba import jit
 import specklepy
 from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account, get_local_accounts
 from specklepy.transports.server import ServerTransport
 from specklepy.api import operations
 from specklepy.objects.geometry import Polyline, Point, Mesh
-
+from specklepy.api.client import SpeckleClient
+from specklepy.api.credentials import get_default_account
+from specklepy.transports.server import ServerTransport
+from specklepy.objects import Base
+from specklepy.api import operations
+import logging
 from specklepy.api.wrapper import StreamWrapper
+import urllib.parse
+import requests
+import inspect
+
 try:
     import openai
 except:
@@ -775,3 +786,385 @@ def add_or_update_page(token, database_id, name, type, time_updated, comment, sp
 
 # Use the function
 #add_or_update_page('your_token', 'your_database_id', 'New Title', 'New Type', datetime.now(), 'This is a comment', 'https://your-link.com')
+
+
+
+def extractChunkedMatrices(streamObj):
+    """
+    Extracts chunked matrices from a Speckle base object and returns them as a dictionary of DataFrames.
+
+    This function processes a Speckle base object, which contains nested matrices either as part of a list or
+    as dynamic attributes of the object. It extracts the matrices, processes their chunks, and returns a 
+    dictionary where the keys are the matrix names and the values are DataFrames representing the matrices.
+
+    Parameters:
+    streamObj (SpeckleBaseObject): The Speckle base object containing the chunked matrices. It is expected 
+                                   that the matrices are nested under the "@Data" key.
+
+    Returns:
+    dict: A dictionary where the keys are matrix names (str) and the values are DataFrames containing the 
+          matrix data. The DataFrame indices are origin UUIDs and columns are destination UUIDs.
+    
+    Raises:
+    KeyError: If the specified keys are not found in the Speckle base object.
+    AttributeError: If the object structure does not match the expected format.
+    
+    Notes:
+    - The function first tries to access the nested matrices via the "@{0}" key in "@Data".
+    - If the access fails, it assumes the data is in the dynamic attributes of the "@Data" object.
+    - Matrices are identified by the presence of "matrix" in their attribute names.
+    - Chunks of rows are processed and combined to form the final matrices.
+    """
+
+    matrices = {}
+    isDict = False
+
+    try:
+        data_part = streamObj["@Data"]["@{0}"]
+        for matrix in data_part:
+            # Find the matrix name
+            matrix_name = next((attr for attr in dir(matrix) if "matrix" in attr), None)
+
+            if not matrix_name:
+                continue
+
+            matrix_data = getattr(matrix, matrix_name)
+            originUUID = matrix_data["@originUUID"]
+            destinationUUID = matrix_data["@destinationUUID"]
+
+            processed_rows = []
+            for chunk in matrix_data["@chunks"]:
+                for row in chunk["@rows"]:
+                    processed_rows.append(row["@row"])
+
+            matrix_array = np.array(processed_rows)
+            matrix_df = pd.DataFrame(matrix_array, index=originUUID, columns=destinationUUID)
+            matrices[matrix_name] = matrix_df
+    except KeyError:
+        data_part = streamObj["@Data"].__dict__
+        print(data_part.keys())
+
+        for k, v in data_part.items():
+            if "matrix" in k:
+                matrix_name = k
+                matrix_data = v
+                originUUID = matrix_data["@originUUID"]
+                destinationUUID = matrix_data["@destinationUUID"]
+
+                processed_rows = []
+                for chunk in matrix_data["@chunks"]:
+                    for row in chunk["@rows"]:
+                        processed_rows.append(row["@row"])
+
+                matrix_array = np.array(processed_rows)
+                matrix_df = pd.DataFrame(matrix_array, index=originUUID, columns=destinationUUID)
+                matrices[matrix_name] = matrix_df
+
+    return matrices
+
+def extractChunkedMatrix(matrix):
+    """
+    Extracts a chunked matrix from a given Speckle matrix object and converts it into a pandas DataFrame.
+
+    Parameters:
+    matrix (dict): The Speckle matrix object containing chunked matrix data.
+
+    Returns:
+    pd.DataFrame: A pandas DataFrame constructed from the chunked matrix data in the matrix object.
+
+    The function navigates through the matrix object to extract the rows from chunks, combines them,
+    and constructs a DataFrame using origin and destination UUIDs as the index and columns, respectively.
+    """
+    # Get the origin and destination UUIDs
+    originUUID = matrix["@originUUID"]
+    destinationUUID = matrix["@destinationUUID"]
+    
+    # Process the rows from chunks
+    processed_rows = []
+    for chunk in matrix["@chunks"]:
+        for row in chunk["@rows"]:
+            processed_rows.append(row["@row"])
+    
+    # Convert the processed rows into a NumPy array
+    matrix_arr = np.array(processed_rows)
+    
+    # Create a DataFrame with the originUUIDs as the index and destinationUUIDs as the columns
+    matrix_df = pd.DataFrame(matrix_arr, index=originUUID, columns=destinationUUID)
+    
+    return matrix_df
+
+
+
+
+@jit(nopython=True)
+def round_matrix(matrix):
+    return np.round(matrix, 4)
+
+def send_matrices_and_create_commit_v(matrices, client, stream_id, branch_name, commit_message, rows_per_chunk, parameterData, MetaData={}):
+    """
+    Sends chunked matrices to Speckle and creates a commit.
+
+    This function processes a dictionary of matrices, chunks their data, rounds them to 4 decimal places,
+    and sends them to Speckle. It then creates a commit on the specified branch with the given commit message.
+
+    Parameters:
+    matrices (dict): A dictionary where keys are matrix names and values are DataFrames containing the matrices.
+    client (SpeckleClient): The Speckle client object used to communicate with the Speckle server.
+    stream_id (str): The ID of the Speckle stream where the matrices will be sent.
+    branch_name (str): The name of the branch where the commit will be created.
+    commit_message (str): The commit message.
+    rows_per_chunk (int): The number of rows per chunk for splitting the matrix data.
+    parameterData (dict): Additional parameter data to be included in the container object.
+    MetaData (dict, optional): Metadata to be included in the commit. Defaults to an empty dictionary.
+
+    Returns:
+    str: The ID of the created commit.
+
+    Raises:
+    Exception: If an error occurs during the sending or committing process.
+    """
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    matrix_ids = {}
+
+    container_object = Base()
+    # Add parameter data to the container object
+    for k, v in parameterData.items():
+        setattr(container_object, k, v)
+
+    # Initialize the keys in the container object
+    for k in matrices.keys():
+        setattr(container_object, k, Base())
+
+    for k, df in matrices.items():
+        matrix_object = Base(metaData="Some metadata")
+        matrix = df.to_numpy()
+        indices = list(df.index.to_numpy().astype(str))
+        cols = list(df.columns)
+
+        # Round the matrix using a vectorized operation
+        rounded_matrix = round_matrix(matrix).tolist()
+
+        # Chunk the rows and create Speckle objects
+        chunks = []
+        row_lists = []
+        for row in rounded_matrix:
+            row_obj = Base()
+            setattr(row_obj, "@row", row)
+            row_lists.append(row_obj)
+
+            if len(row_lists) >= rows_per_chunk:
+                chunk_obj = Base()
+                setattr(chunk_obj, "@rows", row_lists)
+                chunks.append(chunk_obj)
+                row_lists = []
+
+        if row_lists:
+            chunk_obj = Base()
+            setattr(chunk_obj, "@rows", row_lists)
+            chunks.append(chunk_obj)
+
+        obj = Base()
+        setattr(obj, "@originUUID", indices)
+        setattr(obj, "@destinationUUID", cols)
+        setattr(obj, "@chunks", chunks)
+
+        setattr(container_object, k, obj)
+
+        print(container_object)
+
+    try:
+        # Recreate GH Speckle structure
+        dataContainer = Base()
+        setattr(dataContainer, "@Data", container_object)
+        setattr(dataContainer, "@MetaData", json.dumps(MetaData))
+        container_objectid = operations.send(base=dataContainer, transports=[transport])
+        print(f"Container Object ID: {container_objectid}")
+        commit_id = client.commit.create(stream_id=stream_id, object_id=container_objectid, branch_name=branch_name, message=commit_message)
+        print(f"Commit ID: {commit_id}")
+    except Exception as e:
+        logging.error(f"Error occurred: {e}")
+        if hasattr(e, 'response') and hasattr(e.response, 'json'):
+            logging.error(f"Response JSON: {e.response.json()}")
+        raise
+
+    return commit_id
+
+
+
+def generate_metadata(inputs, speckleToken, methodName=None):
+    """
+    Generates metadata by querying the Speckle API for given inputs.
+
+    This function processes a list of inputs, which can be either URLs or lists, to extract stream, branch, 
+    and commit information from the Speckle API. It returns metadata containing the extracted information 
+    along with the method name.
+
+    Parameters:
+    inputs (list): A list of inputs where each input is either a URL (str) or a list containing stream and 
+                   branch and commit(optional) information.
+    speckleToken (str): The Speckle API token for authentication.
+    methodName (str, optional): The name of the method generating this metadata. Defaults to the caller's file name.
+
+    Returns:
+    dict: A dictionary containing the generated metadata, including stream, branch, and commit information, 
+          as well as the method name.
+
+    Raises:
+    ValueError: If the input format is incorrect or not supported.
+    """
+    def decode_url(input_url):
+        parsed_url = urllib.parse.urlparse(input_url)
+        return parsed_url.geturl()
+
+    def send_graphql_query(speckleToken, apiUrl, query):
+        headers = {
+            "Authorization": f"Bearer {speckleToken}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        postData = json.dumps({"query": query})
+        
+        response = requests.post(apiUrl, headers=headers, data=postData)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"HTTP Error: {response.status_code}, {response.reason}")
+            print(response.text)
+            return None
+
+    def parse_input(input_data, input_type='url'):
+        if input_type == 'url':
+            return parse_input_url(input_data)
+        elif input_type == 'list':
+            return parse_input_list(input_data)
+        else:
+            raise ValueError("Invalid input type. Must be 'url' or 'list'.")
+
+    def parse_input_url(input_url):
+        print("Original URL: ", input_url)
+        decoded_url = decode_url(input_url)
+        print("Decoded URL: ", decoded_url)
+        parts = decoded_url.strip('/').split('/')
+        if len(parts) < 7:
+            raise ValueError("URL format is incorrect or not supported.")
+        stream_id = parts[4]
+        resource_type = parts[5]
+        if resource_type.lower() == "branches":
+            resource_id = '/'.join(parts[6:])
+        else:
+            resource_id = parts[6]
+
+        return stream_id, resource_type, resource_id
+
+    def parse_input_list(input_list):
+        if len(input_list) < 2 or len(input_list) > 3:
+            raise ValueError("List format is incorrect or not supported.")
+        stream_id = input_list[0]
+        resource_type = 'branches' if len(input_list) == 2 else 'commits'
+        resource_id = input_list[1] if resource_type == 'branches' else input_list[2]
+        return stream_id, resource_type, resource_id
+
+    def construct_query(stream_id, resource_type, resource_id):
+        if resource_type == "commits":
+            return f"""
+            {{
+              stream(id: "{stream_id}") {{
+                name
+                commit(id: "{resource_id}") {{
+                  id
+                  message
+                  createdAt
+                  branch {{
+                    id
+                    name
+                  }}
+                }}
+              }}
+            }}
+            """
+        elif resource_type == "branches":
+            return f"""
+            {{
+              stream(id: "{stream_id}") {{
+                name
+                branch(name: "{resource_id}") {{
+                  id
+                  name
+                  commits {{
+                    items {{
+                      id
+                      message
+                      createdAt
+                    }}
+                  }}
+                }}
+              }}
+            }}
+            """
+
+    def extract_information(data):
+        if 'data' in data and 'stream' in data['data']:
+            stream = data['data']['stream']
+            stream_name = stream.get('name', 'Unknown Stream Name')
+            stream_id = stream.get('id', 'Unknown Stream ID')
+            if 'branch' in stream:
+                branch_info = stream['branch']
+                branch_name = branch_info.get('name', 'Unknown Branch Name')
+                branch_id = branch_info.get('id', 'Unknown Branch ID')
+                commits = branch_info.get('commits', {}).get('items', [])
+                if commits:
+                    last_commit = commits[0]
+                    return {
+                        "streamName": stream_name,
+                        "branchName": branch_name,
+                        "branchID": branch_id,
+                        "commitID": last_commit['id'],
+                        "commitMessage": last_commit['message'],
+                        "commitCreatedAt": last_commit['createdAt']
+                    }
+            elif 'commit' in stream:
+                commit_info = stream['commit']
+                branch_info = commit_info.get('branch', {})
+                return {
+                    "streamName": stream_name,
+                    "branchName": branch_info.get('name', 'Unknown Branch Name'),
+                    "branchID": branch_info.get('id', 'Unknown Branch ID'),
+                    "commitID": commit_info['id'],
+                    "commitMessage": commit_info['message'],
+                    "commitCreatedAt": commit_info['createdAt']
+                }
+        return "No valid data found"
+
+    if methodName is None:
+        methodName = inspect.getfile(sys._getframe(1))
+    
+    apiUrl = "https://speckle.xyz/graphql"
+    speckleSources = []
+
+    for input_data in inputs:
+        input_type = 'url' if isinstance(input_data, str) else 'list'
+        try:
+            stream_id, resource_type, resource_id = parse_input(input_data, input_type)
+            query = construct_query(stream_id, resource_type, resource_id)
+            result = send_graphql_query(speckleToken, apiUrl, query)
+            if result:
+                extracted_info = extract_information(result)
+                if isinstance(extracted_info, dict):
+                    extracted_info["streamID"] = stream_id
+                    speckleSources.append(extracted_info)
+                else:
+                    print("Failed to extract valid information.")
+                    continue
+            else:
+                print("Failed to retrieve data.")
+                continue
+        except ValueError as e:
+            print(str(e))
+            continue
+
+    metadata = {
+        "speckleSources": speckleSources,
+        "methodName": methodName
+    }
+
+    return metadata

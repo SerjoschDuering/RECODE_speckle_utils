@@ -614,3 +614,97 @@ def notion_db_as_df(database_id, token):
     # To DataFrame
     df = pd.DataFrame(table_data)
     return df
+
+
+
+
+def send_matrices_and_create_commit_vec(matrices, client, stream_id, branch_name, commit_message, rows_per_chunk, containerMetadata):
+    """
+    Send matrices to the Speckle server and create a commit.
+
+    Parameters:
+    matrices (dict or pd.DataFrame): A dictionary of DataFrames, where each key is the matrix name and the value is the DataFrame.
+                                      If a single DataFrame is provided, it will be wrapped into a dictionary with the key 'unnamed_matrix'.
+    client (SpeckleClient): The Speckle client used for communication with the server.
+    stream_id (str): The ID of the stream where the matrices will be sent.
+    branch_name (str): The name of the branch to which the commit will be made.
+    commit_message (str): The message for the commit.
+    rows_per_chunk (int): The number of rows per chunk to be sent.
+    containerMetadata (dict): Metadata to be added to the container object.
+
+    Returns:
+    str: The ID of the created commit.
+
+    Raises:
+    Exception: If there is an error during the process.
+    """
+    # If a single DataFrame is provided, wrap it in a dictionary
+    if isinstance(matrices, pd.DataFrame):
+        matrices = {"unnamed_matrix": matrices}
+
+    transport = ServerTransport(client=client, stream_id=stream_id)
+    matrix_ids = {}
+
+    container_object = Base()
+    # Add to container object
+    for k, v in containerMetadata.items():
+        container_object[k] = v
+
+    # Initialize the keys
+    for k, df in matrices.items():
+        container_object[k] = Base()
+
+    for k, df in matrices.items():
+        matrix_object = Base(metaData="Some metadata")
+        # Convert DataFrame to NumPy array for efficient processing
+        matrix = df.to_numpy()
+        indices = list(df.index.to_numpy().astype(str))
+        cols = list(df.columns)
+
+        # Round the matrix using a vectorized operation
+        rounded_matrix = round_matrix(matrix).tolist()
+
+        # Chunk the rows and create Speckle objects
+        chunks = []
+        row_lists = []
+        for row in rounded_matrix:
+            row_obj = Base()  # Create a new Speckle object for each row
+            set_speckle_attribute(row_obj, "@row", row)
+            row_lists.append(row_obj)
+
+            # If we reach the chunk size, create a new chunk
+            if len(row_lists) >= rows_per_chunk:
+                chunk_obj = Base()  # Create a new Speckle object for the chunk
+                set_speckle_attribute(chunk_obj, "@rows", row_lists)
+                chunks.append(chunk_obj)
+                row_lists = []  # Reset the row list for the next chunk
+
+        # Add any remaining rows as a final chunk
+        if row_lists:
+            chunk_obj = Base()  # Create a new Speckle object for the chunk
+            set_speckle_attribute(chunk_obj, "@rows", row_lists)
+            chunks.append(chunk_obj)
+
+        # Create the main Speckle object
+        obj = Base()
+        set_speckle_attribute(obj, "@originUUID", indices)
+        set_speckle_attribute(obj, "@destinationUUID", cols)
+        set_speckle_attribute(obj, "@chunks", chunks)
+
+        # Add the matrix object to the container
+        container_object[k] = obj
+
+        print(container_object)
+
+    try:
+        container_objectid = operations.send(base=container_object, transports=[transport])
+        print(f"Container Object ID: {container_objectid}")
+        commit_id = client.commit.create(stream_id=stream_id, object_id=container_objectid, branch_name=branch_name, message=commit_message)
+        print(f"Commit ID: {commit_id}")
+    except Exception as e:
+        logging.error(f"Error occurred: {e}")
+        if hasattr(e, 'response') and hasattr(e.response, 'json'):
+            logging.error(f"Response JSON: {e.response.json()}")
+        raise
+
+    return commit_id
