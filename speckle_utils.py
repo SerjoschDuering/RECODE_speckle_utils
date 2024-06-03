@@ -387,7 +387,7 @@ def updateStreamAnalysis(
         return objects_raw #as back-up
 
 
-def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, commit_id=None):
+def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geometryGroupPath=None, match_by_id="", return_original = False, commit_id=None, metaData={}):
     """
     Updates data on a Speckle stream by matching and synchronizing new data inputs with existing data objects within a specified stream and branch. 
     This function is designed to be efficient in processing and updating large datasets by leveraging data frame operations and direct data manipulation.
@@ -459,6 +459,7 @@ def updateStreamAnalysisFast(client, new_data_in, stream_id, branch_name, geomet
       print("!!!!! UUIDS not found anymore - abort commit !!!!!")
       return "fail"
     # Send updated objects back to Speckle
+    res["MetaData"] = json.dumps(metaData) # add MetaData object as string
     new_objects_raw_speckle_id = operations.send(base=res, transports=[transport])
     commit_id = client.commit.create(stream_id=stream_id, branch_name=branch_name, object_id=new_objects_raw_speckle_id, message="Updated item in colab")
     print("commit created")
